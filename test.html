@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<canvas id="myCanvas" width="0" height="0" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML5 canvas tag.</canvas>
+
+
+<script src="master/dist/lua.vm.js"></script>
+
+
+<script>
+
+var c = document.getElementById("myCanvas");
+var ctx = c.getContext("2d");
+var SCREEN_CELL=10
+var SCREEN_CELL_MARGIN=1
+var SCREEN_X_RES=84
+var SCREEN_Y_RES=48
+
+var SCREEN_WIDTH=SCREEN_X_RES*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_CELL_MARGIN
+var SCREEN_HEIGHT=SCREEN_Y_RES*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_CELL_MARGIN
+
+ctx.canvas.width=SCREEN_WIDTH
+ctx.canvas.height=SCREEN_HEIGHT
+
+window.SCREEN=new Array(SCREEN_Y_RES);
+
+for (var i = 0; i < SCREEN_Y_RES; i++) {
+	window.SCREEN[i]=new Array(SCREEN_X_RES);
+	for (var j = 0; j < SCREEN_X_RES; j++) {
+		var btn = document.createElement("DIV");
+		window.SCREEN[i][j]=btn;
+		btn.style.position = 'absolute';
+		btn.style.left=(j)*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_CELL_MARGIN + 'px';
+		btn.style.top=(i)*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_CELL_MARGIN + 'px';
+		btn.style.width=SCREEN_CELL + 'px';
+		btn.style.height=SCREEN_CELL + 'px';
+		
+		btn.style.backgroundColor="#43523d";//"rgb(" + 13 + ", " + 13 + ", " + 126 + ")";
+		
+		document.body.appendChild(btn)
+	}
+}
+
+</script>
+<script>
+window.keys=new Array(256);
+document.addEventListener('keydown', function(event) {
+	window.keys[event.key[0].charCodeAt()]=true;
+});
+document.addEventListener('keyup', function(event) {
+	window.keys[event.key[0].charCodeAt()]=false;
+});
+function jsISKEYPRESSED(k)
+{
+	return window.keys[k.charCodeAt()];
+}
+function jsSETPIXEL(x,y,v)
+{
+	if (v)
+	{
+		window.SCREEN[y-1][x-1].style.backgroundColor="#c7f0d8";//"rgb(" + 0 + ", " + 0 + ", " + 0 + ")";
+	}else
+	{
+		window.SCREEN[y-1][x-1].style.backgroundColor="#43523d";//"rgb(" + 0 + ", " + 200 + ", " + 0 + ")";
+	}
+	
+};
+</script>
+
+
+<script type="text/lua">
+	--require "core"
+	
+	SCREEN_X_RES=84
+	SCREEN_Y_RES=48
+	function ISKEYPRESSED(key)
+		return js.global:jsISKEYPRESSED(key)
+	end
+	function SETPIXEL(x,y,v)
+		js.global:jsSETPIXEL(x,y,v)
+	end
+	function DRAW(x,y,data)
+		
+	end
+
+
+
+
+
+	apple={}
+	
+	snake_table={}
+	snake_head=1
+	snake_direction=0
+	snake_length_to_add=0
+	function _LOAD()
+		snake_table[1]={83,10}
+		snake_table[2]={82,10}
+		snake_direction=3
+		apple={30,30}
+		SETPIXEL(apple[1],apple[2],true);
+	end
+	accdt=0
+	function _LOOP(dt)
+	  accdt=accdt+dt
+	  if accdt<0.1 then
+		return
+	  end
+	  accdt=accdt-0.1
+	  if ISKEYPRESSED("w") then
+		if not (snake_direction==2) then
+		  snake_direction=0
+		end
+	  elseif ISKEYPRESSED("d") then
+		if not (snake_direction==3) then
+		  snake_direction=1
+		end
+	  elseif ISKEYPRESSED("s") then
+		if not (snake_direction==0) then
+		  snake_direction=2
+		end
+	  elseif ISKEYPRESSED("a") then
+		if not (snake_direction==1) then
+		  snake_direction=3
+		end
+	  else
+		--
+	  end
+	  --stara pozycja glowy
+	  local phx,phy=snake_table[snake_head][1],snake_table[snake_head][2]
+	  
+		js.global.console:log(phx)
+	  --ustalenie nowego indexu glowy
+	  snake_head=snake_head-1
+	  if snake_head<=0 then
+		snake_head=#snake_table
+	  end
+	  
+	  --pozycja ogona od usuniecia
+	  local x,y = snake_table[snake_head][1],snake_table[snake_head][2]
+	  
+	  --o ile nie ma dlugosci do dodania
+	  if snake_length_to_add==0 then
+		--usuniecie pixela za ogonem(czyli ten na którego wskazuje obecnie snake_head)
+		SETPIXEL(x,y,false)
+	  else
+		local tl=#snake_table
+		for i=0,tl-snake_head do
+		  snake_table[tl-i+1]=snake_table[tl-i]
+		end
+		snake_table[snake_head]={x,y}
+		snake_head=snake_head+1
+		snake_length_to_add=snake_length_to_add-1
+	  end
+	  --ustawienie nowej pozycji dla glowy
+	  snake_table[snake_head]={phx,phy}
+	  
+	  if snake_direction==0 then
+		snake_table[snake_head][2]=snake_table[snake_head][2]-1
+		if snake_table[snake_head][2]<=0 then
+		  snake_table[snake_head][2]=SCREEN_Y_RES
+		end
+	  elseif snake_direction==1 then
+		snake_table[snake_head][1]=snake_table[snake_head][1]+1
+		if snake_table[snake_head][1]>SCREEN_X_RES then
+		  snake_table[snake_head][1]=1
+		end
+	  elseif snake_direction==2 then
+		snake_table[snake_head][2]=snake_table[snake_head][2]+1
+		if snake_table[snake_head][2]>SCREEN_Y_RES then
+		  snake_table[snake_head][2]=1
+		end
+	  elseif snake_direction==3 then
+		snake_table[snake_head][1]=snake_table[snake_head][1]-1
+		if snake_table[snake_head][1]<=0 then
+		  snake_table[snake_head][1]=SCREEN_X_RES
+		end
+		end
+		--ustawienie pixela w miejscu glowy
+		SETPIXEL(snake_table[snake_head][1],snake_table[snake_head][2],true)
+		
+		--sprawdz czy nie wlazles se na ogon kretynie
+		for i,p in pairs(snake_table) do
+			if (not (i==snake_head)) and (p[1]==snake_table[snake_head][1]) and (p[2]==snake_table[snake_head][2]) then
+				DRAW(30,30,tex_youLost)
+			end
+		end
+		
+		--sprawdz czy w miejscu glowy nie ma jablka
+		if (snake_table[snake_head][1]==apple[1]) and (snake_table[snake_head][2]==apple[2]) then
+		apple={math.floor(math.random()*SCREEN_X_RES)+1,math.floor(math.random()*SCREEN_Y_RES)+1}
+		snake_length_to_add=snake_length_to_add+8;
+		SETPIXEL(apple[1],apple[2],true)
+		end
+	end
+
+
+
+
+
+
+
+
+
+
+
+</script>
+<script>
+function executeLua(code) { 
+	try { L.execute(code); } catch(e) { alert(e.toString()); } 
+}
+
+setTimeout(updateFunc, 10);
+setTimeout(loadFunc, 5);
+function loadFunc()
+{
+	executeLua('_LOAD()');
+};
+
+function updateFunc()
+{
+	executeLua('_LOOP(0.010)');
+	setTimeout(updateFunc, 10);
+};
+</script>
+
+</body>
+</html>
