@@ -1,5 +1,5 @@
 require "core"
-
+require "images"
 isEditor=false
 
 SCREEN_CELL=5
@@ -61,6 +61,8 @@ function love.keypressed(key)
 	elseif key=="]" then
 		SCREEN_CELL_MARGIN=SCREEN_CELL_MARGIN+1
 		updateWindowSize()
+	elseif key=="backspace" then
+		SWAPCOLORS=not SWAPCOLORS
 	else
 		if isEditor then
 			if key=="z" and keypressed["lctrl"] then
@@ -77,13 +79,42 @@ end
 function ISKEYPRESSED(key)
 	return keypressed[key]
 end
+SWAPCOLORS=false
 function SETPIXEL(x,y,v)
+	if x<1 or x>SCREEN_X_RES or y<1 or y>SCREEN_Y_RES then
+		return
+	end
+	
 	screenData[y][x]=v
 end
+--CAMERA_X=0
+--CAMERA_Y=0
+--function SETCAMERAPOS(x,y)
+--	CAMERA_X=x
+--	CAMERA_Y=y
+--end
+--function GETCAMERAPOS()
+--	return CAMERA_X,CAMERA_Y
+--end
 function DRAW(x,y,data)
 	for i,p in pairs(data) do
 		for j,k in pairs(data[i]) do
-			SETPIXEL(x+j,y+i,data[i][j])
+			local v=data[i][j];
+			if v~=0 then
+				v= (v==2)
+				SETPIXEL(x+j,y+i,v)
+			end
+		end
+	end
+end
+function DRAWIMG(x,y,imgPath)
+	local img=IMAGES[imgPath]
+	DRAW(x,y,img)
+end
+function CLEAR()
+	for x=1,SCREEN_X_RES do
+		for y=1,SCREEN_Y_RES do
+			SETPIXEL(x,y,false)
 		end
 	end
 end
@@ -221,7 +252,11 @@ function love.draw()
 	
 	for y,p in pairs(screenData) do--love.graphics.rectangle("fill",100,100,84,48);
 		for x,p in pairs(screenData[y]) do
-			setC(screenData[y][x])
+			if SWAPCOLORS then
+				setC(not screenData[y][x])
+			else
+				setC(screenData[y][x])
+			end
 			--if not (screenData[y][x]==currcolor) then
 			--	currcolor=screenData[y][x]
 			--	setC(currcolor)
