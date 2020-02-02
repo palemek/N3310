@@ -84,22 +84,15 @@ function SETPIXEL(x,y,v)
 	if x<1 or x>SCREEN_X_RES or y<1 or y>SCREEN_Y_RES then
 		return
 	end
-	
 	screenData[y][x]=v
 end
---CAMERA_X=0
---CAMERA_Y=0
---function SETCAMERAPOS(x,y)
---	CAMERA_X=x
---	CAMERA_Y=y
---end
---function GETCAMERAPOS()
---	return CAMERA_X,CAMERA_Y
---end
-function DRAW(x,y,data)
+
+function DRAW(x,y,data,flipx,flipy)
+	local height =#data
+	local width=#data[1]
 	for i,p in pairs(data) do
 		for j,k in pairs(data[i]) do
-			local v=data[i][j];
+			local v=data[(flipy and (height-i+1)) or i][(flipx and (width-j+1))or j];
 			if v~=0 then
 				v= (v==2)
 				SETPIXEL(x+j,y+i,v)
@@ -107,17 +100,26 @@ function DRAW(x,y,data)
 		end
 	end
 end
-function DRAWIMG(x,y,imgPath)
+function DRAWIMG(x,y,imgPath,flipx,flipy)
 	local img=IMAGES[imgPath]
-	DRAW(x,y,img)
+	DRAW(x,y,img,flipx,flipy)
 end
-function CLEAR()
+function CLEAR(white)
 	for x=1,SCREEN_X_RES do
 		for y=1,SCREEN_Y_RES do
-			SETPIXEL(x,y,false)
+			SETPIXEL(x,y,white or false)
 		end
 	end
 end
+function SPHERE(x,y,r,v)
+	for i=math.floor(x-r),math.ceil(x+r) do
+		for j=math.floor(y-r),math.ceil(y+r) do
+			if (i-x)*(i-x)+(j-y)*(j-y)<r*r then	
+				SETPIXEL(i,j,v)
+			end
+		end
+	end
+end;
 function RECTANGLE(x,y,w,h)
 	for i=x,(x+w) do
 		for j=y,(y+h) do
