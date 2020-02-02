@@ -342,7 +342,15 @@ object_player=setmetatable(
 		ret.vy=0;
 		ret.flipx=false;
 		ret.flipy=false;
-		ret.anim=AnimMaker({"postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_1.png","postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_2.png","postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_3.png","postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_4.png","postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_5.png"},5)
+		ret.anim=AnimMaker({
+			"postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_f0.png",
+			"postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_f1.png",
+			"postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_f2.png",
+			"postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_f3.png",
+			"postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_f4.png",
+			"postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_f5.png",
+			"postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_f6.png"
+		},5)
 		ret.type="object_player";
 		return ret;
 	end
@@ -424,15 +432,15 @@ end
 --object_colliding({x=20,y=40,w=120,name="obj1"})
 --object_colliding({x=30,y=10,name="obj1"})
 playerref=object_player({x=25,y=21,w=7,h=13,dox=-6,doy=0,name="player"})
-ogon0=object_ogon({x=25,y=21,w=6,h=6,name="ogon0",img="sphere6.png",length=0,parent=playerref,pox=-2,poy=4})
-ogon1=object_ogon({x=25,y=21,w=4,h=4,name="ogon1",img="sphere4.png",length=2,parent=ogon0})
-ogon2=object_ogon({x=25,y=21,w=2,h=2,name="ogon2",img="sphere2.png",length=1.5,parent=ogon1})
-ogon3=object_ogon({x=25,y=21,w=1,h=1,name="ogon3",img="sphere1.png",length=0.7,parent=ogon2})
-ogon4=object_ogon({x=25,y=21,w=1,h=1,name="ogon4",img="sphere1.png",length=0.7,parent=ogon3})
-
-kaptur0=object_ogon({x=25,y=21,w=4,h=4,name="kaptur0",img="sphere4.png",length=0,parent=playerref,pox=-3,poy=-4})
-kaptur1=object_ogon({x=25,y=21,w=3,h=3,name="kaptur1",img="sphere3.png",length=2,parent=kaptur0})
-kaptur2=object_ogon({x=25,y=21,w=1,h=1,name="kaptur2",img="sphere1.png",length=1.1,parent=kaptur1})
+--ogon0=object_ogon({x=25,y=21,w=6,h=6,name="ogon0",img="sphere6.png",length=0,parent=playerref,pox=-2,poy=4})
+--ogon1=object_ogon({x=25,y=21,w=4,h=4,name="ogon1",img="sphere4.png",length=2,parent=ogon0})
+--ogon2=object_ogon({x=25,y=21,w=2,h=2,name="ogon2",img="sphere2.png",length=1.5,parent=ogon1})
+--ogon3=object_ogon({x=25,y=21,w=1,h=1,name="ogon3",img="sphere1.png",length=0.7,parent=ogon2})
+--ogon4=object_ogon({x=25,y=21,w=1,h=1,name="ogon4",img="sphere1.png",length=0.7,parent=ogon3})
+--
+--kaptur0=object_ogon({x=25,y=21,w=4,h=4,name="kaptur0",img="sphere4.png",length=0,parent=playerref,pox=-3,poy=-4})
+--kaptur1=object_ogon({x=25,y=21,w=3,h=3,name="kaptur1",img="sphere3.png",length=2,parent=kaptur0})
+--kaptur2=object_ogon({x=25,y=21,w=1,h=1,name="kaptur2",img="sphere1.png",length=1.1,parent=kaptur1})
 
 
 
