@@ -1,6 +1,7 @@
+require "levels"
 function _LOAD()
 	currmode=mode_menu
-	transition:start(mode_game)
+	transition:start(mode_game,{lvl="lvl1"})
 end
 function _LOOP(dt)
 	currmode:update()
@@ -15,21 +16,43 @@ transition=
 	progress=0;
 	maxProgress=84;
 	nextmode=nil;
-	start=function(self,nextmode)
-		self.nextmode=nextmode
-		self.enabled=true
-		self.progress=0
+	nextmodeData=nil;
+	start=function(self,nextmode,data)
+		self.nextmode=nextmode;
+		self.enabled=true;
+		self.progress=0;
+		self.nextmodeData=data;
 	end;
 	update=function(self)
-		DRAWIMG(0,0,"cut_scenes_cut_reaper.png");
+		for y=1,SCREEN_Y_RES do
+			for x=1,SCREEN_X_RES do
+				--dla kazdego piksela mamy dodatkowa wartoscia: gdzie jest teraz na teksturze
+				local var=x+(self.progress/self.maxProgress)*336
+				if var >252 then
+				elseif var>190 then
+					--gradient
+					--SETPIXEL(x,y,(x%(var-190)==0 and 2) or 0)
+					SETPIXEL(x,y,1);
+				elseif var>126 then
+					SETPIXEL(x,y,1);
+				elseif var>84 then
+					--SETPIXEL(x,y,(x%(126-var)==0 and 2) or 0)
+					SETPIXEL(x,y,1);
+				end
+			end
+		end
 		self.progress=self.progress+1
 		if self.progress>=self.maxProgress then
 			self:finished()
+		elseif self.progress>=self.maxProgress/2 and currmode~=self.nextmode then
+			self:halfway()
 		end
 	end;
-	finished=function(self)
+	halfway=function(self)
 		currmode=self.nextmode;
-		currmode:init();
+		currmode:init(self.nextmodeData);
+	end;
+	finished=function(self)
 		self.enabled=false
 	end;
 }
@@ -37,18 +60,32 @@ transition=
 
 
 
+
+
 mode_menu=
 {
 	init=function(self)
-		--preapare everything
 	end;
 	update=function(self)
 		CLEAR(true)
+		DRAWIMG(0,0,"cut_scenes_cut_reaper.png");
 	end;
 }
 mode_game=
 {
-	init=function(self)
+	init=function(self,data)
+		--preapare everything
+		--spawn everything
+		for y,d in pairs(LEVELS[data.lvl]) do
+			for x,v in pairs(d) do
+				if v==0 then
+				elseif v==1 then
+					object_colliding({x=x*7,y=y*7,w=7,h=7,name="obj1"})
+				elseif v==2 then
+					object_colliding({x=x*7,y=y*7,w=14,h=7,name="obj2",img="default14x7.png"})
+				end
+			end
+		end
 	end;
 	update=function(self)
 		CLEAR(true)
@@ -97,12 +134,14 @@ allobjects={
 		end
 	end;
 	startupdate=function(self,dt)
-		for i,p in ipairs(self) do
+		for i=1,#self do
+			local p=self[#self-i+1]
 			p:startupdate(dt);
 		end
 	end;
 	endupdate=function(self,dt)
-		for i,p in ipairs(self) do
+		for i=1,#self do
+			local p=self[#self-i+1]
 			p:endupdate(dt);
 		end
 	end
@@ -167,7 +206,7 @@ object=setmetatable(
 		ret.w=props.w or 10;
 		ret.h=props.h or 10;
 		
-		ret.img=props.img or "default.png";
+		ret.img=props.img or "default7x7.png";
 		allobjects[#allobjects+1]=ret;
 		return ret;
 	end
@@ -200,56 +239,29 @@ object_colliding=setmetatable(
 	end;
 	onoverlap=function(self,other)
 		if self.taodx and other.type=="object_colliding" and (not other.isMovable) then
-			
-			--no dobra, teraz szukamy jak daleko byl od kolizji przed kolizja
-			local mdxl,mdxr=self.befx-(other.x+other.w-1),other.x-(self.befx+self.w-1)
-			local mdyd,mdyu=self.befy-(other.y+other.h-1),other.y-(self.befy+self.h-1)
-			if (mdxl>0 or mdxr>0) and (mdyd>0 or mdyu>0) then
-				if mdxl>0 and mdyd>0 then
-					if mdxl>mdyd then
-						self.y=other.y+other.h
-						return 1
-					else
-						self.x=other.x+other.w
-						return 2
-					end
-				elseif mdxl>0 and mdyu>0 then
-					if mdxl>mdyu then
-						self.y=other.y-self.h
-						return 3
-					else
-						self.x=other.x+other.w
-						return 2
-					end
-				elseif mdxr>0 and mdyd>0 then
-					if mdxr>mdyd then
-						self.y=other.y+other.h
-						return 1
-					else
-						self.x=other.x-self.w
-						return 4
-					end
-				elseif mdxr>0 and mdyu>0 then
-					if mdxr>mdyu then
-						self.y=other.y-self.h
-						return 3
-					else
-						self.x=other.x-self.w
-						return 4
-					end
-				end
-			elseif mdxl>0 then
-				self.x=other.x+other.w
-				return 2
-			elseif mdxr>0 then
-				self.x=other.x-self.w
-				return 4
-			elseif mdyu>0 then
-				self.y=other.y-self.h
-				return 3
-			elseif mdyd>0 then
-				self.y=other.y+other.h
-				return 1
+			local fin=function(ret)
+				self.taodx,self.taody,self.befx,self.befy=0,0,0,0;
+				print(self.name.." ret:"..ret)
+				return ret;
+			end
+			if self.type=="object_player" then
+				print("other.y "..other.y..",self.y"..self.y)
+			end
+			local a=1
+			if self.befy+self.h-a<=other.y then
+				self.y=other.y-self.h-a
+				self.vy=0
+			elseif self.befx>=other.x+other.w-a then
+				self.x=other.x+other.w+a
+				self.vx=0
+			elseif self.befx+self.w-a<=other.x then
+				self.x=other.x-self.w-a
+				self.vx=0
+			elseif self.befy>=other.y+other.h-a then
+				self.y=other.y+other.h+a
+				self.vy=0
+			else 
+				print("dupa")
 			end
 		end
 	end;
@@ -266,17 +278,25 @@ object_colliding=setmetatable(
 
 object_player=setmetatable(
 {
+	isStanding=0;
+	isStandingMax=6;
 	startupdate=function(self)
 		object_colliding.startupdate(self)
-		local isStanding=false;
-		if alloverlapping:isCollisionAt(self.x,self.y+self.h,false) or alloverlapping:isCollisionAt(self.x+self.w-1,self.y+self.h,false) then
-			isStanding=true
+		if alloverlapping:isCollisionAt(self.x,self.y+self.h+1,false) or alloverlapping:isCollisionAt(self.x+self.w-1,self.y+self.h+1,false) then
+			self.isStanding=self.isStandingMax;
+		else
+			self.isStanding=self.isStanding-1
 		end
 		
-		if isStanding then
-			self.vy=0;
+		if self.isStanding>0 then
+			if self.isStanding==self.isStandingMax then
+			else
+				self.vy=self.vy+GRAVITY;
+			end
 			if ISKEYPRESSED("w") then
 				self.vy=-2.3;
+				--self.anim=AnimMaker({"postaci_reaper_reaper_jump_2.png"},1);
+				self.isStanding=0;
 			end
 		else
 			self.vy=self.vy+GRAVITY;
@@ -302,8 +322,14 @@ object_player=setmetatable(
 		if dx~=0 or dy~=0 then
 			self:tryaddoffset(dx,dy)
 		end
+		if self.vy<0 then
+			self.img="postaci_reaper_reaper_jump_2.png";
+		elseif self.vy>0 then
+			self.img="postaci_reaper_reaper_jump_3.png";
+		else
+			self.img=self.anim();
+		end
 	end;
-	ogon={};
 	endupdate=function(self)
 		object_colliding.endupdate(self)
 	end;
@@ -316,7 +342,7 @@ object_player=setmetatable(
 		ret.vy=0;
 		ret.flipx=false;
 		ret.flipy=false;
-		
+		ret.anim=AnimMaker({"postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_1.png","postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_2.png","postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_3.png","postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_4.png","postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_5.png"},5)
 		ret.type="object_player";
 		return ret;
 	end
@@ -329,33 +355,31 @@ object_ogon=setmetatable(
 	startupdate=function(self)
 		object_colliding.startupdate(self)
 		
-		local dx,dy=self.x+self.w/2-self.parent.x-self.parent.w/2-self.pox,self.y+self.h/2-self.parent.y-self.parent.h/2-self.poy
-		local dl=math.sqrt(dx*dx+dy*dy)
-		if dl==0 then
-			dx,dy=0,0
-		else
-			dx,dy=dx/dl,dy/dl
+		local sdx,sdy=self.x+self.w/2-self.parent.x-self.parent.w/2-self.pox,self.y+self.h/2-self.parent.y-self.parent.h/2-self.poy
+		local dl=math.sqrt(sdx*sdx+sdy*sdy)
+		local dx,dy=0,0
+		if dl~=0 then
+			dx,dy=sdx/dl,sdy/dl
 		end
-		local accstr=1.2
-		local mmin=-0
-		local mmax=5
-		self.vx,self.vy=self.vx-dx*clamp(dl-self.length,mmin,mmax)*accstr,self.vy-dy*clamp(dl-self.length,mmin,mmax)*accstr
-		local dumping=0.5
-		self.vx,self.vy=self.vx*dumping,self.vy*dumping
-		self.vy=self.vy+GRAVITY
-		self:tryaddoffset(self.vx,self.vy)
+		--local accstr=1.2
+		--local mmin=-0
+		--local mmax=5
+		--self.vx,self.vy=self.vx-dx*clamp(dl-self.length,mmin,mmax)*accstr,self.vy-dy*clamp(dl-self.length,mmin,mmax)*accstr
+		--local dumping=0.5
+		--self.vx,self.vy=self.vx*dumping,self.vy*dumping
+		--self.vy=self.vy+GRAVITY
+		--self:tryaddoffset(self.vx,self.vy)
+		local newdx,newdy=0,0
+		if dl>self.length then
+			newdx,newdy=dx*self.length,dy*self.length
+			self:tryaddoffset(newdx-sdx,newdy-sdy+GRAVITY)
+		else
+			self:tryaddoffset(0,GRAVITY)
+		end
+		
 	end;
 	onoverlap=function(self,other)
-		local v=object_colliding.onoverlap(self,other)
-		if v==1 then
-			self.vy=math.max(0,self.vy)
-		elseif v==3 then
-			self.vy=math.min(0,self.vy)
-		elseif v==2 then
-			self.vx=math.min(0,self.vx)
-		elseif v==4 then
-			self.vx=math.max(0,self.vx)
-		end
+		object_colliding.onoverlap(self,other)
 	end;
 },
 {
@@ -375,21 +399,40 @@ object_ogon=setmetatable(
 	end
 })
 
+AnimMaker=function(framesPaths,speed)
+	local id=0
+	local skipper=1
+	local ret=function()
+		if skipper==speed then
+			skipper=1;
+			id=id+1;
+			if id>#framesPaths then
+				id=1;
+			end
+		else
+			if id==0 then
+				id=1
+			end
+			skipper=skipper+1;
+		end
+		
+		return framesPaths[id]
+	end
+	return ret
+end
 
-object_colliding({x=20,y=40,w=120,name="obj1"})
-object_colliding({x=30,y=10,name="obj1"})
-playerref=object_player({x=25,y=21,w=20,h=15,name="player",img="postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_1.png"})
-ogon0=object_ogon({x=25,y=21,w=6,h=6,name="ogon0",img="sphere6.png",length=0,parent=playerref,pox=-2,poy=4.5})
-ogon1=object_ogon({x=25,y=21,w=4,h=4,name="ogon1",img="sphere4.png",length=3,parent=ogon0})
-ogon2=object_ogon({x=25,y=21,w=2,h=2,name="ogon2",img="sphere2.png",length=2,parent=ogon1})
-ogon3=object_ogon({x=25,y=21,w=1,h=1,name="ogon3",img="sphere1.png",length=1,parent=ogon2})
-ogon4=object_ogon({x=25,y=21,w=1,h=1,name="ogon4",img="sphere1.png",length=1,parent=ogon3})
+--object_colliding({x=20,y=40,w=120,name="obj1"})
+--object_colliding({x=30,y=10,name="obj1"})
+playerref=object_player({x=25,y=21,w=7,h=13,dox=-6,doy=0,name="player"})
+ogon0=object_ogon({x=25,y=21,w=6,h=6,name="ogon0",img="sphere6.png",length=0,parent=playerref,pox=-2,poy=4})
+ogon1=object_ogon({x=25,y=21,w=4,h=4,name="ogon1",img="sphere4.png",length=2,parent=ogon0})
+ogon2=object_ogon({x=25,y=21,w=2,h=2,name="ogon2",img="sphere2.png",length=1.5,parent=ogon1})
+ogon3=object_ogon({x=25,y=21,w=1,h=1,name="ogon3",img="sphere1.png",length=0.7,parent=ogon2})
+ogon4=object_ogon({x=25,y=21,w=1,h=1,name="ogon4",img="sphere1.png",length=0.7,parent=ogon3})
 
 kaptur0=object_ogon({x=25,y=21,w=4,h=4,name="kaptur0",img="sphere4.png",length=0,parent=playerref,pox=-3,poy=-4})
 kaptur1=object_ogon({x=25,y=21,w=3,h=3,name="kaptur1",img="sphere3.png",length=2,parent=kaptur0})
 kaptur2=object_ogon({x=25,y=21,w=1,h=1,name="kaptur2",img="sphere1.png",length=1.1,parent=kaptur1})
-
-
 
 
 
