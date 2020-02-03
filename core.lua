@@ -1,9 +1,13 @@
 require "levels"
+
 function _LOAD()
 	currmode=mode_menu
 	transition:start(mode_game,{lvl="lvl1"})
 end
 function _LOOP(dt)
+	if ISKEYPRESSED("x") then
+		transition:start(mode_game,{lvl="lvl1"})
+	end
 	currmode:update()
 	if transition.enabled then
 		transition:update()
@@ -14,57 +18,52 @@ transition=
 {
 	enabled=false;
 	progress=0;
-	maxProgress=84;
+	maxProgress=SCREEN_Y_RES;
 	nextmode=nil;
 	nextmodeData=nil;
+	didHalfway=false;
 	start=function(self,nextmode,data)
+		if self.enabled then
+			return
+		end
+		print("start some mode")
+		self.didHalfway=false;
 		self.nextmode=nextmode;
 		self.enabled=true;
 		self.progress=0;
+		self.maxProgress=SCREEN_Y_RES;
 		self.nextmodeData=data;
 	end;
 	update=function(self)
-		for y=1,SCREEN_Y_RES do
-			for x=1,SCREEN_X_RES do
-				--dla kazdego piksela mamy dodatkowa wartoscia: gdzie jest teraz na teksturze
-				local var=x+(self.progress/self.maxProgress)*336
-				if var >252 then
-				elseif var>190 then
-					--gradient
-					--SETPIXEL(x,y,(x%(var-190)==0 and 2) or 0)
-					SETPIXEL(x,y,1);
-				elseif var>126 then
-					SETPIXEL(x,y,1);
-				elseif var>84 then
-					--SETPIXEL(x,y,(x%(126-var)==0 and 2) or 0)
-					SETPIXEL(x,y,1);
-				end
-			end
-		end
+		DRAWIMG(SCREEN_Y_RES-4.0*self.progress,0,"transition.png")
+		
 		self.progress=self.progress+1
 		if self.progress>=self.maxProgress then
 			self:finished()
-		elseif self.progress>=self.maxProgress/2 and currmode~=self.nextmode then
+		elseif self.progress>=self.maxProgress*(3/8) and (not self.didHalfway) then
+			self.didHalfway=true;
 			self:halfway()
 		end
 	end;
 	halfway=function(self)
+		currmode["finish"](currmode)
 		currmode=self.nextmode;
 		currmode:init(self.nextmodeData);
+		print("some mode init")
 	end;
 	finished=function(self)
 		self.enabled=false
+		print("transition finito")
 	end;
 }
-
-
-
-
 
 
 mode_menu=
 {
 	init=function(self)
+	end;
+	finish=function(self)
+		print("menu finishing")
 	end;
 	update=function(self)
 		CLEAR(true)
@@ -76,13 +75,64 @@ mode_game=
 	init=function(self,data)
 		--preapare everything
 		--spawn everything
+		
+		camera.x=0
+		camera.y=0
+		
+		playerref=object_player		({x=LEVELS[data.lvl].px,y=LEVELS[data.lvl].py,w=6,h=13,dox=-6,doy=0,name="player"})
+		ogon0=object_ogon			({x=LEVELS[data.lvl].px,y=LEVELS[data.lvl].py,w=5,h=5,name="ogon0",img="sphere6.png",length=0,parent=playerref,pox=-2,poy=5})
+		local ogon1=object_ogon		({x=LEVELS[data.lvl].px,y=LEVELS[data.lvl].py,w=4,h=4,name="ogon1",img="sphere4.png",length=2,parent=ogon0,poy=1})
+		local ogon2=object_ogon		({x=LEVELS[data.lvl].px,y=LEVELS[data.lvl].py,w=2,h=2,name="ogon2",img="sphere2.png",length=1.5,parent=ogon1,poy=0.7})
+		local ogon3=object_ogon		({x=LEVELS[data.lvl].px,y=LEVELS[data.lvl].py,w=1,h=1,name="ogon3",img="sphere1.png",length=0.5,parent=ogon2,poy=0.5})
+		local ogon4=object_ogon		({x=LEVELS[data.lvl].px,y=LEVELS[data.lvl].py,w=1,h=1,name="ogon4",img="sphere1.png",length=0.4,parent=ogon3})
+		kaptur0=object_ogon			({x=LEVELS[data.lvl].px,y=LEVELS[data.lvl].py,w=4,h=4,name="kaptur0",img="sphere4.png",length=0,parent=playerref,pox=-2.5,poy=-4})
+		local kaptur1=object_ogon	({x=LEVELS[data.lvl].px,y=LEVELS[data.lvl].py,w=3,h=3,name="kaptur1",img="sphere3.png",length=1,parent=kaptur0})
+		local kaptur2=object_ogon	({x=LEVELS[data.lvl].px,y=LEVELS[data.lvl].py,w=1,h=1,name="kaptur2",img="sphere1.png",length=0.3,parent=kaptur1})
+		
+		if LEVELS[data.lvl].zlols then
+			for i,d in pairs(LEVELS[data.lvl].zlols) do
+				local z=object_zlol({x=d[1],y=d[2],w=4,h=10,dox=-2,doy=-3,img="postaci_zlol_idle_1.png"})
+			end
+		end
 		for y,d in pairs(LEVELS[data.lvl]) do
+			if type(y)=="string" then
+				break
+			end
 			for x,v in pairs(d) do
+				local px,py=(x-1)*7,(y-1)*7
 				if v==0 then
 				elseif v==1 then
-					object_colliding({x=x*7,y=y*7,w=7,h=7,name="obj1"})
+					object_colliding({x=px,y=py,w=7,h=7,name="obj1"})
 				elseif v==2 then
-					object_colliding({x=x*7,y=y*7,w=14,h=7,name="obj2",img="default14x7.png"})
+					object_door({x=px,y=py,w=7,h=7,name="door",img="sphere1.png",nextlevel="lvl2"})
+				elseif v==20 then
+					object_colliding({x=px,y=py,w=14,h=7,name="obj2",img="obiekty_tiles_t1_2x1.png"})
+				elseif v==21 then
+					object_colliding({x=px,y=py,w=14,h=7,name="obj2",img="obiekty_tiles_t2_2x1.png"})
+				elseif v==22 then
+					object_colliding({x=px,y=py,w=14,h=7,name="obj2",img="obiekty_tiles_t3_2x1.png"})
+				elseif v==23 then
+					object_colliding({x=px,y=py,w=14,h=7,name="obj2",img="obiekty_tiles_t4_2x1.png"})
+				elseif v==24 then
+					object_colliding({x=px,y=py,w=14,h=7,name="obj2",img="obiekty_tiles_t5_2x1.png"})
+				elseif v==25 then
+					object_colliding({x=px,y=py,w=14,h=7,name="obj2",img="obiekty_tiles_t6_2x1.png"})
+				elseif v==26 then
+					object_colliding({x=px,y=py,w=14,h=7,name="obj2",img="obiekty_tiles_t7_2x1.png"})
+				elseif v==27 then
+					object_colliding({x=px,y=py,w=14,h=7,name="obj2",img="obiekty_tiles_t8_2x1.png"})
+				elseif v==28 then
+					object_colliding({x=px,y=py,w=14,h=7,name="obj2",img="obiekty_tiles_t9_2x1.png",doy=-2})
+				elseif v==29 then
+					object_colliding({x=px,y=py,w=14,h=7,name="obj2",img="obiekty_tiles_t10_2x1.png",dox=-1,doy=-1})
+				elseif v==30 then
+					object_colliding({x=px,y=py,w=14,h=7,name="obj2",img="obiekty_tiles_t11_2x1.png"})
+				elseif v==31 then
+					object_colliding({x=px,y=py,w=14,h=7,name="obj2",img="obiekty_tiles_t12_2x1.png"})
+				elseif v==51 then
+					object_colliding({x=px,y=py,w=21,h=20,name="drzwi tyl",img="test2.png"})
+				elseif v==52 then
+					object_infront({x=px,y=py,name="drzwi przod",img="test.png"})
 				end
 			end
 		end
@@ -91,8 +141,17 @@ mode_game=
 		CLEAR(true)
 		camera:update()
 		allobjects:startupdate()
+		allobjects_infront:startupdate()
 		alloverlapping:update()
 		allobjects:endupdate()
+		allobjects_infront:endupdate()
+		
+	end;
+	finish=function(self)
+		print("game finishing")
+		allobjects:clear()
+		allobjects_infront:clear()
+		alloverlapping:clear()
 	end;
 }
 mode_cutscene=
@@ -101,8 +160,10 @@ mode_cutscene=
 	end;
 	update=function(self)
 	end;
+	finish=function(self)
+	end;
 }
-local playerref=nil
+playerref=nil
 camera=
 {
 	x=10;
@@ -124,14 +185,52 @@ camera=
 }
 
 allobjects={
+	clear=function(self)
+		local size=#self
+		for i=1,size do
+			self[size-i+1]=nil
+		end
+	end;
+	todelete={};
 	delete=function(self,obj)
-		for i,p in pairs(self) do
-			if p==obj then
-				self[i]=self[#self]
-				self[#self]=nil
-				break
+		self.todelete[#self.todelete+1]=obj
+	end;
+	startupdate=function(self,dt)
+		for i=1,#self do
+			local p=self[#self-i+1]
+			p:startupdate(dt);
+		end
+	end;
+	endupdate=function(self,dt)
+		for i=1,#self do
+			local p=self[#self-i+1]
+			
+			p:endupdate(dt);
+		end
+		
+		--delete todelete
+		for i,obj in pairs(self.todelete) do
+			for i,p in pairs(self) do
+				if p==obj then
+					self[i]=self[#self]
+					self[#self]=nil
+					break
+				end
 			end
 		end
+		self.todelete={}
+	end
+}
+allobjects_infront={
+	clear=function(self)
+		local size=#self
+		for i=1,size do
+			self[size-i+1]=nil
+		end
+	end;
+	todelete={};
+	delete=function(self,obj)
+		self.todelete[#self.todelete+1]=obj
 	end;
 	startupdate=function(self,dt)
 		for i=1,#self do
@@ -144,38 +243,72 @@ allobjects={
 			local p=self[#self-i+1]
 			p:endupdate(dt);
 		end
+		
+		--delete todelete
+		for i,obj in pairs(self.todelete) do
+			for i,p in pairs(self) do
+				if p==obj then
+					self[i]=self[#self]
+					self[#self]=nil
+					break
+				end
+			end
+		end
+		self.todelete={}
 	end
 }
 alloverlapping={
+	clear=function(self)
+		local size=#self
+		for i=1,size do
+			self[size-i+1]=nil
+		end
+	end;
 	isCollisionAt=function(self,x,y,isMovable)
 		for i=1,#self do
 			if self[i].isMovable==isMovable then
 				if self[i].x<=x and self[i].x+self[i].w>x and self[i].y<=y and self[i].y+self[i].h>y then
-					return true
+					return true,self[i]
 				end
 			end
 		end
 		return false
 	end;
-	delete=function(self,obj)
-		for i,p in pairs(self) do
-			if p==obj then
-				self[i]=self[#self]
-				self[#self]=nil
-				break
+	isCollisionAtWithType=function(self,x,y,othertype)
+		for i=1,#self do
+			if self[i].type==othertype then
+				if self[i].x<=x and self[i].x+self[i].w>x and self[i].y<=y and self[i].y+self[i].h>y then
+					return true,self[i]
+				end
 			end
 		end
+		return false
+	end;
+	todelete={};
+	delete=function(self,obj)
+		self.todelete[#self.todelete+1]=obj
 	end;
 	update=function(self,dt)
 		for i=1,#self do
 			for j=i+1,#self do
 				if self:areoverlapping(self[i],self[j]) then
-					--print(self[i].name.." overlapped "..self[j].name);
 					self[i]:onoverlap(self[j])
 					self[j]:onoverlap(self[i])
 				end
 			end
 		end
+		
+		--delete todelete
+		for i,obj in pairs(self.todelete) do
+			for i,p in pairs(self) do
+				if p==obj then
+					self[i]=self[#self]
+					self[#self]=nil
+					break
+				end
+			end
+		end
+		self.todelete={}
 	end;
 	areoverlapping=function(self,obj1,obj2)
 		if (obj1.x+obj1.w<=obj2.x) or (obj2.x+obj2.w<=obj1.x) or (obj1.y+obj1.h<=obj2.y) or (obj2.y+obj2.h<=obj1.y) then
@@ -185,6 +318,32 @@ alloverlapping={
 		end
 	end
 }
+object_infront=setmetatable(
+{
+	startupdate=function(self,dt)
+	end;
+	endupdate=function(self,dt)
+		DRAWIMG(math.floor(self.x+self.dox+0.5)-camera.x,math.floor(self.y+self.doy+0.5)-camera.y,self.img,self.flipx,self.flipy)
+	end;
+},
+{
+	__index=object;
+	__call=function(self,props)
+		local ret=setmetatable({},{__index=self;});
+		ret.type="object_infront";
+		ret.name=props.name or "none";
+		ret.x=props.x or 0;
+		ret.y=props.y or 0;
+		ret.dox=props.dox or 0;
+		ret.doy=props.doy or 0;
+		ret.w=props.w or 10;
+		ret.h=props.h or 10;
+		
+		ret.img=props.img or "default7x7.png";
+		allobjects_infront[#allobjects_infront+1]=ret;
+		return ret;
+	end
+})
 object=setmetatable(
 {
 	startupdate=function(self,dt)
@@ -241,12 +400,9 @@ object_colliding=setmetatable(
 		if self.taodx and other.type=="object_colliding" and (not other.isMovable) then
 			local fin=function(ret)
 				self.taodx,self.taody,self.befx,self.befy=0,0,0,0;
-				print(self.name.." ret:"..ret)
 				return ret;
 			end
-			if self.type=="object_player" then
-				print("other.y "..other.y..",self.y"..self.y)
-			end
+			
 			local a=1
 			if self.befy+self.h-a<=other.y then
 				self.y=other.y-self.h-a
@@ -280,6 +436,8 @@ object_player=setmetatable(
 {
 	isStanding=0;
 	isStandingMax=6;
+	isAttacking=false;
+	isRight=true;
 	startupdate=function(self)
 		object_colliding.startupdate(self)
 		if alloverlapping:isCollisionAt(self.x,self.y+self.h+1,false) or alloverlapping:isCollisionAt(self.x+self.w-1,self.y+self.h+1,false) then
@@ -306,28 +464,80 @@ object_player=setmetatable(
 		if ISKEYPRESSED("d") and not ISKEYPRESSED("a") then
 			dx=1;
 			if self.flipx then
-				self.flipx=false
-				kaptur0.pox=-kaptur0.pox
-				ogon0.pox=-ogon0.pox
+				if self.isAttacking then
+				else
+					self.flipx=false
+					kaptur0.pox=-kaptur0.pox
+					ogon0.pox=-ogon0.pox
+				end
 			end
 		elseif ISKEYPRESSED("a") then
 			dx=-1;
 			if not self.flipx then
-				self.flipx=true
-				kaptur0.pox=-kaptur0.pox
-				ogon0.pox=-ogon0.pox
+				if self.isAttacking then
+				else
+					self.flipx=true
+					kaptur0.pox=-kaptur0.pox
+					ogon0.pox=-ogon0.pox
+				end
+			end
+		end
+		if ISKEYPRESSED("z") and (not self.isAttacking) then
+			--just started attack
+			self.isAttacking=true
+				kaptur0.poy=kaptur0.poy+2
+			if self.flipx then
+				kaptur0.pox=kaptur0.pox-2
+			else
+				kaptur0.pox=kaptur0.pox+2
 			end
 		end
 		
 		if dx~=0 or dy~=0 then
 			self:tryaddoffset(dx,dy)
 		end
-		if self.vy<0 then
-			self.img="postaci_reaper_reaper_jump_2.png";
-		elseif self.vy>0 then
-			self.img="postaci_reaper_reaper_jump_3.png";
+		
+		if self.isAttacking then
+			local justfin=false;
+			self.img,justfin=self.AttackAnim();
+			if justfin then
+				self.isAttacking=false
+					kaptur0.poy=kaptur0.poy-2
+				if self.flipx then
+					kaptur0.pox=kaptur0.pox+2
+				else
+					kaptur0.pox=kaptur0.pox-2
+				end
+				self.img=self.IdleAnim();
+			else
+				if self.flipx then
+					local is1,other1=alloverlapping:isCollisionAtWithType(self.x-3,self.y+self.h/2,"object_zlol")
+					local is2,other2=alloverlapping:isCollisionAtWithType(self.x-6,self.y+self.h/2,"object_zlol")
+					if is1 then
+						other1:die()
+					end
+					if is2 then
+						other2:die()
+					end
+				else
+					local is1,other1=alloverlapping:isCollisionAtWithType(self.x+self.w+2,self.y+self.h/2,"object_zlol")
+					local is2,other2=alloverlapping:isCollisionAtWithType(self.x+self.w+5,self.y+self.h/2,"object_zlol")
+					if is1 then
+						other1:die()
+					end
+					if is2 then
+						other2:die()
+					end
+				end
+			end
+		elseif self.isStanding>0 then
+			self.img=self.IdleAnim();
+		elseif self.vy<-0.8 then
+			self.img="postaci_reaper_reaper_jump_up.png";
+		elseif self.vy>0.8 then
+			self.img="postaci_reaper_reaper_jump_down.png";
 		else
-			self.img=self.anim();
+			self.img="postaci_reaper_reaper_jump_mid.png";
 		end
 	end;
 	endupdate=function(self)
@@ -342,7 +552,8 @@ object_player=setmetatable(
 		ret.vy=0;
 		ret.flipx=false;
 		ret.flipy=false;
-		ret.anim=AnimMaker({
+		
+		ret.AttackAnim=AnimMaker({
 			"postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_f0.png",
 			"postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_f1.png",
 			"postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_f2.png",
@@ -350,11 +561,150 @@ object_player=setmetatable(
 			"postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_f4.png",
 			"postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_f5.png",
 			"postaci_reaper_atak_idle_kosa_reaper_atak_kosa_idle_f6.png"
-		},5)
+		},5);
+		ret.IdleAnim=AnimMaker(
+		{
+			"postaci_reaper_atak_idle_kosa_idle.png"
+		},1);
+		
 		ret.type="object_player";
 		return ret;
 	end
 })
+
+object_zlol=setmetatable(
+{
+	isThinking=50;
+	maxThinking=100;
+	isDead=false;
+	die=function(self)
+		self.isDead=true;
+		self.anim=self.DeathAnim
+	end;
+	startupdate=function(self)
+		if self.isDead then
+		else
+			object_colliding.startupdate(self)
+			if self.isThinking>0 then
+				self.isThinking=self.isThinking-1
+				self.anim=self.IdleAnim
+			else
+				if self.isThinking==0 then
+					--just got here
+					self.isThinking=-1
+					self.flipx=not self.flipx
+				end
+				--sprawdzmy czy ma po czym chodzic przed soba i czy moze isc przed siebie
+				local czyPrzedNimJestPodloga=false
+				local czyPrzedNimJestSciana =false
+				if self.flipx then
+					czyPrzedNimJestPodloga=alloverlapping:isCollisionAt(self.x-2,self.y+self.h+1,false)
+					czyPrzedNimJestSciana=alloverlapping:isCollisionAt(self.x-2,self.y+3,false) or alloverlapping:isCollisionAt(self.x-2,self.y+6,false)
+				else
+					czyPrzedNimJestPodloga=alloverlapping:isCollisionAt(self.x+self.w+1,self.y+self.h+1,false)
+					czyPrzedNimJestSciana=alloverlapping:isCollisionAt(self.x+self.w+1,self.y+3,false) or alloverlapping:isCollisionAt(self.x+self.w+1,self.y+6,false)
+				end
+				
+				if (not czyPrzedNimJestPodloga) or czyPrzedNimJestSciana then
+					self.isThinking=self.maxThinking
+				else
+					self:tryaddoffset((self.flipx and -0.5) or 0.5,0);
+					self.anim=self.RunAnim
+				end
+				
+			end
+			--if self.flipx then
+			--	self:tryaddoffset(-2,0)
+			--else
+			--	self:tryaddoffset(2,0)
+			--end
+		end
+		local fin=false
+		self.img,fin=self.anim()
+		if self.isDead and fin then
+			allobjects:delete(self)
+			alloverlapping:delete(self)
+		end
+	end;
+	endupdate=function(self)
+		object_colliding.endupdate(self)
+	end;
+},
+{
+	__index=object_colliding;
+	__call=function(self,props)
+		local ret = getmetatable(object_colliding).__call(self, props);
+		ret.type="object_zlol";
+		ret.isMovable=true;
+		ret.vy=0;
+		ret.flipx=false;
+		ret.flipy=false;
+		
+		ret.RunAnim=AnimMaker({
+			"postaci_zlol_run_1.png",
+			"postaci_zlol_run_2.png",
+			"postaci_zlol_run_3.png",
+			"postaci_zlol_run_4.png",
+			"postaci_zlol_run_5.png",
+			"postaci_zlol_run_6.png",
+			"postaci_zlol_run_7.png",
+			"postaci_zlol_run_8.png"
+		},5)
+		ret.DeathAnim=AnimMaker({
+			"postaci_zlol_death__.0000.png",
+			"postaci_zlol_death__.0001.png",
+			"postaci_zlol_death__.0002.png",
+			"postaci_zlol_death__.0003.png",
+			"postaci_zlol_death__.0004.png",
+			"postaci_zlol_death__.0005.png",
+			"postaci_zlol_death__.0006.png",
+			"postaci_zlol_death__.0007.png",
+			"postaci_zlol_death__.0008.png",
+			"postaci_zlol_death__.0009.png",
+			"postaci_zlol_death__.0010.png",
+			"postaci_zlol_death__.0011.png",
+			"postaci_zlol_death__.0012.png",
+			"postaci_zlol_death__.0013.png",
+			"postaci_zlol_death__.0014.png",
+			"postaci_zlol_death__.0015.png",
+			"postaci_zlol_death__.0016.png",
+			"postaci_zlol_death__.0017.png",
+			"postaci_zlol_death__.0018.png",
+			"postaci_zlol_death__.0019.png",
+			"postaci_zlol_death__.0020.png",
+			"postaci_zlol_death__.0021.png",
+			"postaci_zlol_death__.0022.png",
+			"postaci_zlol_death__.0023.png",
+			"postaci_zlol_death__.0024.png",
+			"postaci_zlol_death__.0025.png",
+			"postaci_zlol_death__.0026.png",
+			"postaci_zlol_death__.0027.png",
+			"postaci_zlol_death__.0028.png",
+			"postaci_zlol_death__.0029.png",
+			"postaci_zlol_death__.0030.png",
+			"postaci_zlol_death__.0031.png"
+		},6,true);
+		ret.IdleAnim=AnimMaker({
+			"postaci_zlol_idle_0.png",
+			"postaci_zlol_idle_1.png",
+			"postaci_zlol_idle_2.png",
+			"postaci_zlol_idle_3.png",
+			"postaci_zlol_idle_4.png",
+			"postaci_zlol_idle_5.png",
+			"postaci_zlol_idle_6.png",
+			"postaci_zlol_idle_7.png",
+			"postaci_zlol_idle_8.png",
+			"postaci_zlol_idle_9.png"
+		},8);
+		
+		return ret;
+	end
+})
+
+
+
+
+
 clamp=function(a,mi,ma)
 	return math.max(mi,math.min(ma,a))
 end
@@ -407,15 +757,44 @@ object_ogon=setmetatable(
 	end
 })
 
-AnimMaker=function(framesPaths,speed)
+
+object_door=setmetatable(
+{
+	onoverlap=function(self,other)
+		object_colliding.onoverlap(self,other)
+		print("kolizja drzwi")
+		if other.type=="object_player" then
+			transition:start(mode_game,{lvl=self.nextlevel})
+		end
+	end;
+},
+{
+	__index=object_overlapping;
+	__call=function(self,props)
+		local ret = getmetatable(object_overlapping).__call(self, props);
+		ret.type="object_door";
+		ret.nextlevel=props.nextlevel;
+		return ret;
+	end
+})
+
+
+
+AnimMaker=function(framesPaths,speed,singlerun)
 	local id=0
 	local skipper=1
 	local ret=function()
-		if skipper==speed then
+		local justFinished=false
+		if skipper>=speed then
 			skipper=1;
 			id=id+1;
 			if id>#framesPaths then
-				id=1;
+				justFinished=true
+				if not singlerun then
+					id=1;
+				else
+					id =#framesPaths;
+				end
 			end
 		else
 			if id==0 then
@@ -423,24 +802,11 @@ AnimMaker=function(framesPaths,speed)
 			end
 			skipper=skipper+1;
 		end
-		
-		return framesPaths[id]
+		return framesPaths[id],justFinished
 	end
 	return ret
 end
 
---object_colliding({x=20,y=40,w=120,name="obj1"})
---object_colliding({x=30,y=10,name="obj1"})
-playerref=object_player({x=25,y=21,w=7,h=13,dox=-6,doy=0,name="player"})
---ogon0=object_ogon({x=25,y=21,w=6,h=6,name="ogon0",img="sphere6.png",length=0,parent=playerref,pox=-2,poy=4})
---ogon1=object_ogon({x=25,y=21,w=4,h=4,name="ogon1",img="sphere4.png",length=2,parent=ogon0})
---ogon2=object_ogon({x=25,y=21,w=2,h=2,name="ogon2",img="sphere2.png",length=1.5,parent=ogon1})
---ogon3=object_ogon({x=25,y=21,w=1,h=1,name="ogon3",img="sphere1.png",length=0.7,parent=ogon2})
---ogon4=object_ogon({x=25,y=21,w=1,h=1,name="ogon4",img="sphere1.png",length=0.7,parent=ogon3})
---
---kaptur0=object_ogon({x=25,y=21,w=4,h=4,name="kaptur0",img="sphere4.png",length=0,parent=playerref,pox=-3,poy=-4})
---kaptur1=object_ogon({x=25,y=21,w=3,h=3,name="kaptur1",img="sphere3.png",length=2,parent=kaptur0})
---kaptur2=object_ogon({x=25,y=21,w=1,h=1,name="kaptur2",img="sphere1.png",length=1.1,parent=kaptur1})
 
 
 

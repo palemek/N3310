@@ -90,8 +90,8 @@ end
 function DRAW(x,y,data,flipx,flipy)
 	local height =#data
 	local width=#data[1]
-	for i,p in pairs(data) do
-		for j,k in pairs(data[i]) do
+	for i=1,height do
+		for j=1,width do
 			local v=data[(flipy and (height-i+1)) or i][(flipx and (width-j+1))or j];
 			if v~=0 then
 				v= (v==2)
