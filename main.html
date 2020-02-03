@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<canvas id="myCanvas" width="0" height="0" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML5 canvas tag.</canvas>
+
+
+<script src="master/dist/lua.vm.js"></script>
+
+
+<script>
+
+var c = document.getElementById("myCanvas");
+var ctx = c.getContext("2d");
+var SCREEN_CELL=10
+var SCREEN_CELL_MARGIN=1
+var SCREEN_X_RES=84
+var SCREEN_Y_RES=48
+
+var SCREEN_WIDTH=SCREEN_X_RES*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_CELL_MARGIN
+var SCREEN_HEIGHT=SCREEN_Y_RES*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_CELL_MARGIN
+
+ctx.canvas.width=SCREEN_WIDTH
+ctx.canvas.height=SCREEN_HEIGHT
+
+//window.SCREEN=new Array(SCREEN_Y_RES);
+//
+//for (var i = 0; i < SCREEN_Y_RES; i++) {
+//	window.SCREEN[i]=new Array(SCREEN_X_RES);
+//	for (var j = 0; j < SCREEN_X_RES; j++) {
+//		var btn = document.createElement("DIV");
+//		window.SCREEN[i][j]=btn;
+//		btn.style.position = 'absolute';
+//		btn.style.left=(j)*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_CELL_MARGIN + 'px';
+//		btn.style.top=(i)*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_CELL_MARGIN + 'px';
+//		btn.style.width=SCREEN_CELL + 'px';
+//		btn.style.height=SCREEN_CELL + 'px';
+//		
+//		btn.style.backgroundColor="#43523d";//"rgb(" + 13 + ", " + 13 + ", " + 126 + ")";
+//		
+//		document.body.appendChild(btn)
+//	}
+//}
+
+</script>
+<script>
+window.keys=new Array(256);
+document.addEventListener('keydown', function(event) {
+	window.keys[event.key[0].charCodeAt()]=true;
+});
+document.addEventListener('keyup', function(event) {
+	window.keys[event.key[0].charCodeAt()]=false;
+});
+function jsISKEYPRESSED(k)
+{
+	return window.keys[k.charCodeAt()];
+}
+var b="#c7f0d8"
+var w="#43523d"
+function jsSETPIXEL(x,y,v)
+{
+	var c=v?b:w;
+	
+	ctx.fillStyle=c;
+	ctx.fillRect(10+x*(SCREEN_CELL+SCREEN_CELL_MARGIN), 10+y*(SCREEN_CELL+SCREEN_CELL_MARGIN), SCREEN_CELL, SCREEN_CELL);
+	
+	//if (window.SCREEN[y-1][x-1].style.backgroundColor!=c)
+	//{
+	//	window.SCREEN[y-1][x-1].style.backgroundColor=c
+	//}
+	//if (v)
+	//{
+	//	if (window.SCREEN[y-1][x-1].style.backgroundColor!=b)
+	//	{
+	//		window.SCREEN[y-1][x-1].style.backgroundColor=b;//"rgb(" + 0 + ", " + 0 + ", " + 0 + ")";
+	//	}
+	//}else
+	//{
+	//	window.SCREEN[y-1][x-1].style.backgroundColor=w;//"rgb(" + 0 + ", " + 200 + ", " + 0 + ")";
+	//}
+	//
+};
+function jsCLEAR(v)
+{
+	var c=v?b:w;
+	ctx.fillStyle=c;
+	ctx.fillRect(10, 10, SCREEN_WIDTH, SCREEN_HEIGHT);
+};
+</script>
+
+
+<script type="text/lua">
+	
+	SCREEN_X_RES=84
+	SCREEN_Y_RES=48
+	function ISKEYPRESSED(key)
+		return js.global:jsISKEYPRESSED(key)
+	end
+	function SETPIXEL(x,y,v)
+		if x<1 or x>SCREEN_X_RES or y<1 or y>SCREEN_Y_RES then
+			return
+		end
+		js.global:jsSETPIXEL(x,y,v)
+	end
+	function DRAW(x,y,data,flipx,flipy)
+		local height =#data
+		local width=#data[1]
+		local sx,ex,sy,ey=math.max(1,-x),math.min(width,SCREEN_X_RES-x),math.max(1,-y),math.min(height,SCREEN_Y_RES-y)
+		for i=sy,ey do
+			for j=sx,ex do
+				local v=data[(flipy and (height-i+1)) or i][(flipx and (width-j+1))or j];
+				if v~=0 then
+					v= (v==2)
+					SETPIXEL(x+j,y+i,v)
+				end
+			end
+		end
+	end
+	function DRAWIMG(x,y,imgPath,flipx,flipy)
+		local img=IMAGES[imgPath]
+		DRAW(x,y,img,flipx,flipy)
+	end
+	function CLEAR(v)
+		js.global:jsCLEAR(v)
+		--for x=1,SCREEN_X_RES do
+		--	for y=1,SCREEN_Y_RES do
+		--		SETPIXEL(x,y,white or false)
+		--	end
+		--end
+	end
+
+--[[GAME STARTS HERE]]
+
+XXXXX_XXXXX
+
+--[[GAME ENDS HERE]]
+
+</script>
+<script>
+function executeLua(code) { 
+	try { L.execute(code); } catch(e) { alert(e.toString()); } 
+}
+
+setTimeout(updateFunc, 1);
+setTimeout(loadFunc, 5);
+function loadFunc()
+{
+	executeLua('_LOAD()');
+};
+
+function updateFunc()
+{
+	executeLua('_LOOP(0.010)');
+	setTimeout(updateFunc, 1);
+};
+</script>
+
+</body>
+</html>

@@ -90,8 +90,9 @@ end
 function DRAW(x,y,data,flipx,flipy)
 	local height =#data
 	local width=#data[1]
-	for i=1,height do
-		for j=1,width do
+	local sx,ex,sy,ey=math.max(1,-x),math.min(width,SCREEN_X_RES-x),math.max(1,-y),math.min(height,SCREEN_Y_RES-y)
+	for i=sy,ey do
+		for j=sx,ex do
 			local v=data[(flipy and (height-i+1)) or i][(flipx and (width-j+1))or j];
 			if v~=0 then
 				v= (v==2)

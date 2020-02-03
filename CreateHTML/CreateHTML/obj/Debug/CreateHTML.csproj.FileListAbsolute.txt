@@ -1,0 +1,7 @@
+C:\Users\JakubOrlinski\Downloads\N3310-master\CreateHTML\CreateHTML\bin\Debug\CreateHTML.exe.config
+C:\Users\JakubOrlinski\Downloads\N3310-master\CreateHTML\CreateHTML\bin\Debug\CreateHTML.exe
+C:\Users\JakubOrlinski\Downloads\N3310-master\CreateHTML\CreateHTML\bin\Debug\CreateHTML.pdb
+C:\Users\JakubOrlinski\Downloads\N3310-master\CreateHTML\CreateHTML\obj\Debug\CreateHTML.csprojAssemblyReference.cache
+C:\Users\JakubOrlinski\Downloads\N3310-master\CreateHTML\CreateHTML\obj\Debug\CreateHTML.csproj.CoreCompileInputs.cache
+C:\Users\JakubOrlinski\Downloads\N3310-master\CreateHTML\CreateHTML\obj\Debug\CreateHTML.exe
+C:\Users\JakubOrlinski\Downloads\N3310-master\CreateHTML\CreateHTML\obj\Debug\CreateHTML.pdb

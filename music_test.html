@@ -1,0 +1,55 @@
+<head>
+</head>
+<body>
+<button type="button" onclick="playMusic()">Click Me!</button>
+<script>
+//window.addEventListener("load", playSound);
+
+const context = new AudioContext();
+var musicData=new Array();
+musicData.push({'t':500, 'f':200, 'v':0.002});
+musicData.push({'t':300, 'f':300, 'v':0.008});
+musicData.push({'t':500, 'f':400, 'v':0.006});
+musicData.push({'t':800, 'f':350, 'v':0.004});
+const oscillator = context.createOscillator();
+oscillator.type = "square";
+//oscillator.frequency.value=300;
+
+const gainNode = context.createGain();
+
+gainNode.gain.value = 0.01;
+
+oscillator.connect(gainNode);
+gainNode.connect(context.destination);
+
+function playSound()
+{
+	if (!(musicIndex<musicData.length))
+	{
+		oscillator.stop()
+		return;
+	}
+	oscillator.frequency.setValueAtTime(musicData[musicIndex].f, context.currentTime);
+	//volume
+	gainNode.gain.setValueAtTime(musicData[musicIndex].v,context.currentTime);
+	
+	console.log(musicData[musicIndex].t);
+	console.log(musicData[musicIndex].f);
+	console.log(musicData[musicIndex].v);
+	
+	window.setTimeout(playSound,musicData[musicIndex].t);
+	musicIndex++;
+}
+
+
+var musicIndex=0;
+
+function playMusic()
+{
+	oscillator.start(0);
+	//context.resume();
+	
+	playSound();
+}
+</script>
+</body>

@@ -72,12 +72,14 @@ mode_menu=
 }
 mode_game=
 {
+	cullLvlData=nil;
 	init=function(self,data)
 		--preapare everything
 		--spawn everything
+		self.currLvlData=LEVELS[data.lvl];
 		
-		camera.x=0
-		camera.y=0
+		camera.x=0;
+		camera.y=0;
 		
 		playerref=object_player		({x=LEVELS[data.lvl].px,y=LEVELS[data.lvl].py,w=6,h=13,dox=-6,doy=0,name="player"})
 		ogon0=object_ogon			({x=LEVELS[data.lvl].px,y=LEVELS[data.lvl].py,w=5,h=5,name="ogon0",img="sphere6.png",length=0,parent=playerref,pox=-2,poy=5})
@@ -169,17 +171,27 @@ camera=
 	x=10;
 	y=10;
 	update=function(self)
+		local lvlHeight=#mode_game.currLvlData*7
+		local lvlWidth=#mode_game.currLvlData[1]*7
 		
 		local plmx,plmy=math.floor(playerref.x+playerref.w/2+0.5),math.floor(playerref.y+playerref.h/2+0.5)
 		if plmx-(self.x+SCREEN_X_RES/2)>-10 then
-			self.x=self.x+1
+			if self.x+SCREEN_X_RES < lvlWidth then
+				self.x=self.x+1
+			end
 		elseif plmx-(self.x+SCREEN_X_RES/2)<-20 then
-			self.x=self.x-1
+			if self.x>0 then
+				self.x=self.x-1
+			end
 		end
-		if plmy-(self.y+SCREEN_Y_RES/2)>12 then
-			self.y=self.y+1
+		if plmy-(self.y+SCREEN_Y_RES/2)>10 then
+			if self.y+SCREEN_Y_RES < lvlHeight then
+				self.y=self.y+1
+			end
 		elseif plmy-(self.y+SCREEN_Y_RES/2)<-20 then
-			self.y=self.y-1
+			if self.y>0 then
+				self.y=self.y-1
+			end
 		end
 	end;
 }
@@ -417,6 +429,7 @@ object_colliding=setmetatable(
 				self.y=other.y+other.h+a
 				self.vy=0
 			else 
+				self.y=self.y+1
 				print("dupa")
 			end
 		end
@@ -428,6 +441,27 @@ object_colliding=setmetatable(
 		local ret = getmetatable(object_overlapping).__call(self, props);
 		ret.isMovable=props.isMovable or false;
 		ret.type="object_colliding";
+		return ret;
+	end
+})
+
+object_platform=setmetatable(
+{
+	self.movementSpeed
+	startupdate=function(self)
+		object_colliding.startupdate(self)
+		
+	end
+},
+{
+	__index=object_colliding;
+	__call=function(self,props)
+		local ret = getmetatable(object_colliding).__call(self, props);
+		ret.direction=props.direction or "horizontal"
+		ret.movementMin=props.movementMin or (ret.direction=="horizontal" and ret.x) or ret.y;
+		ret.movementMax=props.movementMax or (ret.direction=="horizontal" and ret.x) or ret.y;
+		ret.movementSpeed=
+		ret.type="object_platform";
 		return ret;
 	end
 })
