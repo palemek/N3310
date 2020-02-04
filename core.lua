@@ -1,8 +1,9 @@
 require "levels"
 
 function _LOAD()
+	CLEAR(true)
 	currmode=mode_menu
-	transition:start(mode_game,{lvl="lvl1"})
+	mode_menu:init()
 end
 function _LOOP(dt)
 	if ISKEYPRESSED("1") then
@@ -14,9 +15,9 @@ function _LOOP(dt)
 	if ISKEYPRESSED("3") then
 		transition:start(mode_game,{lvl="lvl3"})
 	end
-	currmode:update()
+	currmode:update(dt)
 	if transition.enabled then
-		transition:update()
+		transition:update(dt)
 	end
 end
 GRAVITY=0.1
@@ -32,7 +33,8 @@ transition=
 		if self.enabled then
 			return
 		end
-		if data.lvl=="won" then
+		if data and data.lvl and data.lvl=="won" then
+			nextmode=mode_EndGameCredits
 			--TUTAJ SPAWNUJEMY END GAME CREDITS
 		end
 		print("start some mode")
@@ -69,16 +71,134 @@ transition=
 
 mode_menu=
 {
+	index=0; -- index jak 0 to ekran startowy, jak wiecej to index z cutsceneList
+	menuTime=0;
+	whoopsMax=0.8;
+	whoops=-1;
+	cutsceneList={
+		--[[tutaj pathy do cutscenek i czasy - czy robimy przejscia miedzy cutscenkami jakies triki? --DO UZUPELNIENIA!!!!!!!!!!
+		TAK, przesuwanie ekranu lewo prawo góra dół w czasie wiec
+		{anim=bil--dozrobienia w init'cie,imagePaths,timeBetweenFrames,direction=}]]
+		{imagePaths={
+			"cut_scenes_cut_work_korpo.png"
+			},
+			timeBetweenFrames=3,direction="right"};
+		{imagePaths={
+			"cut_scenes_cut_collect_soul.png"
+			},
+			timeBetweenFrames=3,direction="left"};
+		{imagePaths={
+			"cut_scenes_cut_catch_him.png"
+			}
+			,timeBetweenFrames=3,direction="left"};
+		
+	};
 	init=function(self)
+		--DRAWIMG(0,0,"cut_scenes_cut_reaper.png");
+		for i=1,#self.cutsceneList do
+			self.cutsceneList[i].anim=CutsceneAnimMaker(self.cutsceneList[i].imagePaths,self.cutsceneList[i].timeBetweenFrames);
+		end
 	end;
 	finish=function(self)
 		print("menu finishing")
 	end;
-	update=function(self)
-		CLEAR(true)
-		DRAWIMG(0,0,"cut_scenes_cut_reaper.png");
+	zpressedtime=0;
+	update=function(self,dt)
+		if ISKEYPRESSED("z") then
+			self.zpressedtime=self.zpressedtime+dt
+			if self.zpressedtime>1 then
+				transition:start(mode_game,{lvl="lvl1"})
+			end
+		else
+			self.zpressedtime=0
+		end
+		if self.whoops~=-1 then
+			--jest przejscie obecnie
+			self.whoops=self.whoops+dt
+			
+			local dir=nil
+			local currLastFrame=nil
+			if self.index==0 then
+				dir="down"
+				currLastFrame="cut_scenes_cut_reaper.png"
+			else
+				dir=self.cutsceneList[self.index].direction
+				currLastFrame=self.cutsceneList[self.index].imagePaths[#self.cutsceneList[self.index].imagePaths]
+			end
+			print("currLastFrame: "..currLastFrame)
+			local nextFirstFrame=self.cutsceneList[self.index+1].imagePaths[1]
+			
+			local progx=math.floor((self.whoops/self.whoopsMax)*SCREEN_X_RES);
+			local progy=math.floor((self.whoops/self.whoopsMax)*SCREEN_Y_RES);
+			
+			if dir=="top" then
+				DRAWIMG(0,-progy,currLastFrame)
+				DRAWIMG(0,SCREEN_Y_RES-progy,nextFirstFrame)
+			elseif dir=="down" then
+				DRAWIMG(0,progy,currLastFrame)
+				DRAWIMG(0,-SCREEN_Y_RES+progy,nextFirstFrame)
+			elseif dir=="left" then
+				DRAWIMG(-progx,0,currLastFrame)
+				DRAWIMG(SCREEN_X_RES-progx,0,nextFirstFrame)
+			else
+				DRAWIMG(progx,0,currLastFrame)
+				DRAWIMG(-SCREEN_X_RES+progx,0,nextFirstFrame)
+			end
+			
+			if self.whoops>=self.whoopsMax then
+				self.whoops=-1
+				self.index=self.index+1
+			end
+		else
+			if self.index==0 then
+				--jestesmy w menu
+				self.menuTime=self.menuTime+dt
+				if ISKEYPRESSED("z") then
+					self.whoops=0
+				end
+				DRAWIMG(0,0,"cut_scenes_cut_reaper.png")
+			else
+				--cutscenki
+				local img,fin=self.cutsceneList[self.index].anim(dt)
+				
+				if fin then --jezeli skonczylismy aktualna animacje
+					if self.index==#self.cutsceneList then --jezeli to byla ostatnia animacja
+						transition:start(mode_game,{lvl="lvl1"})
+					else --jezeli to nie byla ostatnia animacja
+						self.whoops=0;--zacznij tranzycje do nastepnej
+					end
+				end
+				DRAWIMG(0,0,img)
+			end
+			
+		end
 	end;
 }
+
+CutsceneAnimMaker=function(framesPaths,timeBetweenFrames)
+	local id=0
+	local skipper=0
+	local ret=function(dt)
+		local justFinished=false
+		if skipper>=timeBetweenFrames then
+			skipper=0;
+			id=id+1;
+			if id>#framesPaths then
+				justFinished=true
+				id =#framesPaths;
+			end
+		else
+			if id==0 then
+				id=1
+			end
+			skipper=skipper+dt;
+		end
+		return framesPaths[id],justFinished
+	end
+	return ret
+end
+
+
 mode_game=
 {
 	cullLvlData=nil;
@@ -205,6 +325,59 @@ mode_game=
 					object_colliding({x=px,y=py,w=21,h=20,name="drzwi tyl",img="test2.png"})
 				elseif v==52 then
 					object_infront({x=px,y=py,name="drzwi przod",img="test.png"})
+				elseif v==61 then
+				elseif v==62 then
+					object_inback({x=px,y=py,name="tlo",img="tla_b3.png"})
+				elseif v==63 then
+				elseif v==70 then
+					object_colliding({x=px,y=py,w=7,h=7,name="tile",img="obiekty_tiles_biom2_t2_1x1.png",dox=-1})
+				elseif v==71 then
+					object_colliding({x=px,y=py,w=14,h=7,name="tile",img="obiekty_tiles_biom2_t2_2x1.png",dox=-1})
+				elseif v==72 then
+					object_colliding({x=px,y=py,w=14,h=7,name="tile",img="obiekty_tiles_biom2_t2b_2x1.png"})
+				elseif v==73 then
+					object_colliding({x=px,y=py,w=21,h=7,name="tile",img="obiekty_tiles_biom2_t2_3x1.png"})
+				elseif v==74 then
+					object_colliding({x=px,y=py,w=21,h=7,name="tile",img="obiekty_tiles_biom2_t2b_3x1.png"})
+				elseif v==75 then
+					object_colliding({x=px,y=py,w=28,h=7,name="tile",img="obiekty_tiles_biom2_t2_4x1.png"})
+				elseif v==76 then
+					object_colliding({x=px,y=py,w=28,h=7,name="tile",img="obiekty_tiles_biom2_t2_4x1.png"})
+				elseif v==77 then
+					object_colliding({x=px,y=py,w=7,h=28,name="tile",img="obiekty_tiles_biom2_t2_1x4.png"})
+				elseif v==78 then
+					object_colliding({x=px,y=py,w=7,h=42,name="tile",img="obiekty_tiles_biom2_t2_1x6.png",dox=-1})
+				elseif v==79 then
+					object_colliding({x=px,y=py,w=161,h=3,name="tile",img="obiekty_tiles_biom2_t2_23x1.png"})
+				elseif v==80 then
+					object_colliding({x=px,y=py,w=35,h=7,name="tile",img="obiekty_tiles_biom2_t2_5x1.png"})
+				elseif v==81 then
+					object_colliding({x=px,y=py,w=35,h=7,name="tile",img="obiekty_tiles_biom2_t2_5x1.png",flipx=true})
+				elseif v==82 then
+					object({x=px,y=py,name="tile",img="obiekty_tiles_biom2_d2_1x23.png"})
+				elseif v==83 then
+					object({x=px,y=py,name="tile",img="obiekty_tiles_biom2_d2_1x23.png",flipx=true})
+				elseif v==84 then
+					local liczbakolejnychplat=0
+					local ytocheck=y+1
+					while LEVELS[data.lvl][ytocheck][x]==85 do
+						liczbakolejnychplat=liczbakolejnychplat+1
+						ytocheck=ytocheck+1
+					end
+					object_platform_ver({x=px,y=py,w=21,h=7,name="platform",img="obiekty_tiles_biom2_t2_3x1.png",movementSpeed=0.2,movementMin=py,movementMax=py+liczbakolejnychplat*7})
+					
+				elseif v==85 then
+					--forbidden
+				elseif v==86 then
+					local liczbakolejnychplat=0
+					local xtocheck=x+1
+					while d[xtocheck]==87 do
+						liczbakolejnychplat=liczbakolejnychplat+1
+						xtocheck=xtocheck+1
+					end
+					object_platform_hor({x=px,y=py,w=21,h=7,name="platform",img="obiekty_tiles_biom2_t2_3x1.png",movementSpeed=0.3,movementMin=px,movementMax=px+liczbakolejnychplat*7})
+				elseif v==87 then
+					--RESERVED FOR PLATFORM_HOR HELPER
 				elseif v==91 then
 					object_bat({x=px,y=py,w=8,h=5,name="bat",dox=-3,dox=-1})
 				elseif v==92 then
@@ -213,32 +386,57 @@ mode_game=
 				end
 			end
 		end
+		if data.lvl=="lvl3" then
+			object_colliding({x=-7,y=0,w=7,h=48*7,img="sphere1.png"})
+			object_colliding({x=84,y=0,w=7,h=48*7,img="sphere1.png"})
+		end
 	end;
-	update=function(self)
+	update=function(self,dt)
 		CLEAR(true)
-		camera:update()
-		allobjects:startupdate()
-		allobjects_infront:startupdate()
-		alloverlapping:update()
-		allobjects:endupdate()
-		allobjects_infront:endupdate()
+		camera:update(dt)
+		allobjects_inback:startupdate(dt)
+		allobjects:startupdate(dt)
+		allobjects_infront:startupdate(dt)
+		alloverlapping:update(dt)
+		allobjects_inback:endupdate(dt)
+		allobjects:endupdate(dt)
+		allobjects_infront:endupdate(dt)
 		
 	end;
 	finish=function(self)
 		print("game finishing")
 		allobjects:clear()
 		allobjects_infront:clear()
+		allobjects_inback:clear()
 		alloverlapping:clear()
 	end;
 	lostGame=function(self)
 		transition:start(mode_game,{lvl="lvl1"})
 	end
 }
-mode_cutscene=
+mode_EndGameCredits=
+{
+	mytime=0;
+	init=function(self)
+		self.anim=AnimMaker(
+			{--paths to frames
+			--THOSE FRAMES SHOULD HAVE RESOLUTION:		XRES,YRES*2
+				
+			},5)
+	end;
+	update=function(self,dt)
+		self.mytime=self.mytime+dt
+		local imageHeight=3*SCREEN_Y_RES --TRZEBA BEDZIE ZMIENIC
+		DRAWIMG(0,math.min(0,math.max(10-self.mytime,-SCREEN_Y_RES)),self.anim())
+	end;
+	finish=function(self)
+	end;
+}
+mode_Lost=
 {
 	init=function(self)
 	end;
-	update=function(self)
+	update=function(self,dt)
 	end;
 	finish=function(self)
 	end;
@@ -248,7 +446,7 @@ camera=
 {
 	x=10;
 	y=10;
-	update=function(self)
+	update=function(self,dt)
 		local lvlHeight=#mode_game.currLvlData*7
 		local lvlWidth=#mode_game.currLvlData[1]*7
 		
@@ -410,6 +608,16 @@ alloverlapping={
 		end
 		return false
 	end;
+	isSquareCollisionAtWithType=function(self,x,y,w,h,othertype)
+		for i=1,#self do
+			if self[i].type==othertype then
+				if not ((self[i].x+self[i].w<=x) or (x+w<=self[i].x) or (self[i].y+self[i].h<=y) or (y+h<=self[i].y)) then
+					return true,self[i]
+				end
+			end
+		end
+		return false
+	end;
 	todelete={};
 	delete=function(self,obj)
 		self.todelete[#self.todelete+1]=obj
@@ -475,7 +683,7 @@ object_inback=setmetatable(
 	startupdate=function(self,dt)
 	end;
 	endupdate=function(self,dt)
-		DRAWIMG(math.floor(self.x+self.dox+0.5)-camera.x,math.floor(self.y+self.doy+0.5)-camera.y,self.img,self.flipx,self.flipy)
+		DRAWIMG(math.floor(self.x+self.dox+0.5-camera.x/2),math.floor(self.y+self.doy+0.5-camera.y/2),self.img,self.flipx,self.flipy)
 	end;
 },
 {
@@ -514,6 +722,7 @@ object=setmetatable(
 		ret.y=props.y or 0;
 		ret.dox=props.dox or 0;
 		ret.doy=props.doy or 0;
+		ret.flipx=props.flipx;
 		ret.w=props.w or 10;
 		ret.h=props.h or 10;
 		
@@ -629,7 +838,9 @@ object_platform_ver=setmetatable(
 		self.y=self.y+self.movementSpeed
 	end;
 	onoverlap=function(self,other)
-		other.y=other.y+self.movementSpeed
+		if self.movementSpeed<0 then
+			other.y=other.y+2*self.movementSpeed
+		end
 	end;
 },
 {
@@ -723,22 +934,14 @@ object_player=setmetatable(
 				self.img=self.IdleAnim();
 			else
 				if self.flipx then
-					local is1,other1=alloverlapping:isCollisionAtWithType(self.x-3,self.y+self.h/2,"object_zlol")
-					local is2,other2=alloverlapping:isCollisionAtWithType(self.x-6,self.y+self.h/2,"object_zlol")
-					if is1 then
-						other1:die()
-					end
-					if is2 then
-						other2:die()
+					local is,other=alloverlapping:isSquareCollisionAtWithType(self.x-5,self.y+2,4,9,"object_zlol")
+					if is then
+						other:die()
 					end
 				else
-					local is1,other1=alloverlapping:isCollisionAtWithType(self.x+self.w+2,self.y+self.h/2,"object_zlol")
-					local is2,other2=alloverlapping:isCollisionAtWithType(self.x+self.w+5,self.y+self.h/2,"object_zlol")
-					if is1 then
-						other1:die()
-					end
-					if is2 then
-						other2:die()
+					local is,other=alloverlapping:isSquareCollisionAtWithType(self.x+self.w,self.y+2,4,9,"object_zlol")
+					if is then
+						other:die()
 					end
 				end
 			end
@@ -812,6 +1015,12 @@ object_fly=setmetatable(
 			allobjects:delete(self)
 			alloverlapping:delete(self)
 		end
+	end;
+	onoverlap=function(self,other)
+		object_colliding.onoverlap(self,other)
+		if other.type=="object_player" then
+			transition:start(mode_Lost)
+		end
 	end
 },
 {
@@ -867,7 +1076,7 @@ object_bat=setmetatable(
 			"postaci_nietoperz_death_f.0018.png",
 			"postaci_nietoperz_death_f.0019.png",
 			"postaci_nietoperz_death_f.0020.png"
-		},3);
+		},3,true);
 		return ret;
 	end
 })
@@ -928,6 +1137,12 @@ object_zlol=setmetatable(
 	endupdate=function(self)
 		object_colliding.endupdate(self)
 	end;
+	onoverlap=function(self,other)
+		object_colliding.onoverlap(self,other)
+		if other.type=="object_player" then
+			transition:start(mode_Lost)
+		end
+	end
 },
 {
 	__index=object_colliding;
