@@ -5,8 +5,14 @@ function _LOAD()
 	transition:start(mode_game,{lvl="lvl1"})
 end
 function _LOOP(dt)
-	if ISKEYPRESSED("x") then
+	if ISKEYPRESSED("1") then
 		transition:start(mode_game,{lvl="lvl1"})
+	end
+	if ISKEYPRESSED("2") then
+		transition:start(mode_game,{lvl="lvl2"})
+	end
+	if ISKEYPRESSED("3") then
+		transition:start(mode_game,{lvl="lvl3"})
 	end
 	currmode:update()
 	if transition.enabled then
@@ -25,6 +31,9 @@ transition=
 	start=function(self,nextmode,data)
 		if self.enabled then
 			return
+		end
+		if data.lvl=="won" then
+			--TUTAJ SPAWNUJEMY END GAME CREDITS
 		end
 		print("start some mode")
 		self.didHalfway=false;
@@ -78,8 +87,6 @@ mode_game=
 		--spawn everything
 		self.currLvlData=LEVELS[data.lvl];
 		
-		camera.x=0;
-		camera.y=0;
 		
 		playerref=object_player		({x=LEVELS[data.lvl].px,y=LEVELS[data.lvl].py,w=6,h=13,dox=-6,doy=0,name="player"})
 		ogon0=object_ogon			({x=LEVELS[data.lvl].px,y=LEVELS[data.lvl].py,w=5,h=5,name="ogon0",img="sphere6.png",length=0,parent=playerref,pox=-2,poy=5})
@@ -91,11 +98,10 @@ mode_game=
 		local kaptur1=object_ogon	({x=LEVELS[data.lvl].px,y=LEVELS[data.lvl].py,w=3,h=3,name="kaptur1",img="sphere3.png",length=1,parent=kaptur0})
 		local kaptur2=object_ogon	({x=LEVELS[data.lvl].px,y=LEVELS[data.lvl].py,w=1,h=1,name="kaptur2",img="sphere1.png",length=0.3,parent=kaptur1})
 		
-		if LEVELS[data.lvl].zlols then
-			for i,d in pairs(LEVELS[data.lvl].zlols) do
-				local z=object_zlol({x=d[1],y=d[2],w=4,h=10,dox=-2,doy=-3,img="postaci_zlol_idle_1.png"})
-			end
-		end
+		camera.x=math.max(0,playerref.x-SCREEN_X_RES/2);
+		camera.y=math.max(0,playerref.y-SCREEN_Y_RES/2);
+		
+		
 		for y,d in pairs(LEVELS[data.lvl]) do
 			if type(y)=="string" then
 				break
@@ -107,6 +113,30 @@ mode_game=
 					object_colliding({x=px,y=py,w=7,h=7,name="obj1"})
 				elseif v==2 then
 					object_door({x=px,y=py,w=7,h=7,name="door",img="sphere1.png",nextlevel="lvl2"})
+				elseif v==3 then
+					object_door({x=px,y=py,w=7,h=7,name="door",img="sphere1.png",nextlevel="lvl3"})
+				elseif v==4 then
+					object_door({x=px,y=py,w=7,h=7,name="door",img="sphere1.png",nextlevel="won"})
+				elseif v==10 then
+					local liczbakolejnychplat=0
+					local xtocheck=x+1
+					while d[xtocheck]==11 do
+						liczbakolejnychplat=liczbakolejnychplat+1
+						xtocheck=xtocheck+1
+					end
+					object_platform_hor({x=px,y=py,w=15,h=7,name="platform",img="obiekty_tiles_t2_2x1.png",movementSpeed=0.3,movementMin=px,movementMax=px+liczbakolejnychplat*7})
+				elseif v==11 then
+					--RESERVED FOR PLATFORM_HOR HELPER
+				elseif v==12 then
+					local liczbakolejnychplat=0
+					local ytocheck=y+1
+					while LEVELS[data.lvl][ytocheck][x]==13 do
+						liczbakolejnychplat=liczbakolejnychplat+1
+						ytocheck=ytocheck+1
+					end
+					object_platform_ver({x=px,y=py,w=15,h=7,name="platform",img="obiekty_tiles_t2_2x1.png",movementSpeed=0.3,movementMin=py,movementMax=py+liczbakolejnychplat*7})
+				elseif v==13 then
+					--RESERVED FOR PLATFORM_HOR HELPER
 				elseif v==20 then
 					object_colliding({x=px,y=py,w=14,h=7,name="obj2",img="obiekty_tiles_t1_2x1.png"})
 				elseif v==21 then
@@ -131,10 +161,55 @@ mode_game=
 					object_colliding({x=px,y=py,w=14,h=7,name="obj2",img="obiekty_tiles_t11_2x1.png"})
 				elseif v==31 then
 					object_colliding({x=px,y=py,w=14,h=7,name="obj2",img="obiekty_tiles_t12_2x1.png"})
+				elseif v==32 then
+					object_colliding({x=px,y=py,w=14,h=14,name="obj2",img="obiekty_tiles_biom3_t3w_2x2.png"})
+				elseif v==33 then
+					object_colliding({x=px,y=py,w=14,h=14,name="obj2",img="obiekty_tiles_biom3_t3b_2x2.png"})
+				elseif v==34 then
+					object_colliding({x=px,y=py,w=21,h=21,name="obj2",img="obiekty_tiles_biom3_t3b_3x3.png"})
+				elseif v==35 then
+					object_colliding({x=px,y=py,w=21,h=21,name="obj2",img="obiekty_tiles_biom3_t3w_3x3.png"})
+				elseif v==36 then
+					object_colliding({x=px,y=py,w=28,h=28,name="obj2",img="obiekty_tiles_biom3_t3_4x4.png",dox=-1})
+				elseif v==37 then
+					local liczbakolejnychplat=0
+					local xtocheck=x+1
+					while d[xtocheck]==38 do
+						liczbakolejnychplat=liczbakolejnychplat+1
+						xtocheck=xtocheck+1
+					end
+					object_platform_hor({x=px,y=py,w=21,h=7,name="platform",img="obiekty_tiles_biom3_t3_3x1.png",movementSpeed=0.3,movementMin=px,movementMax=px+liczbakolejnychplat*7})
+				elseif v==38 then
+					--FORBIDDEN
+				elseif v==39 then
+					local liczbakolejnychplat=0
+					local ytocheck=y+1
+					while LEVELS[data.lvl][ytocheck][x]==40 do
+						liczbakolejnychplat=liczbakolejnychplat+1
+						ytocheck=ytocheck+1
+					end
+					object_platform_ver({x=px,y=py,w=15,h=7,name="platform",img="obiekty_tiles_biom3_t3_3x1.png",movementSpeed=0.2,movementMin=py,movementMax=py+liczbakolejnychplat*7})
+				elseif v==40 then
+					--FORBIDDEN
+				elseif v==42 then
+					object_colliding({x=px,y=py,w=14,h=14,name="obj2",img="obiekty_tiles_biom3_t3w_2x2.png",flipx=true})
+				elseif v==43 then
+					object_colliding({x=px,y=py,w=14,h=14,name="obj2",img="obiekty_tiles_biom3_t3b_2x2.png",flipx=true})
+				elseif v==44 then
+					object_colliding({x=px,y=py,w=21,h=21,name="obj2",img="obiekty_tiles_biom3_t3b_3x3.png",flipx=true})
+				elseif v==45 then
+					object_colliding({x=px,y=py,w=21,h=21,name="obj2",img="obiekty_tiles_biom3_t3w_3x3.png",flipx=true})
+				elseif v==46 then
+					object_colliding({x=px,y=py,w=28,h=28,name="obj2",img="obiekty_tiles_biom3_t3_4x4.png",flipx=true,dox=-1})
 				elseif v==51 then
 					object_colliding({x=px,y=py,w=21,h=20,name="drzwi tyl",img="test2.png"})
 				elseif v==52 then
 					object_infront({x=px,y=py,name="drzwi przod",img="test.png"})
+				elseif v==91 then
+					object_fly({x=px,y=py,w=4,h=4,name="muszka",img="sphere3.png"})
+				elseif v==92 then
+					local zlolx,zloly=px,py-3
+					object_zlol({x=zlolx,y=zloly,w=4,h=10,dox=-2,doy=-3,img="postaci_zlol_idle_1.png"})
 				end
 			end
 		end
@@ -155,6 +230,9 @@ mode_game=
 		allobjects_infront:clear()
 		alloverlapping:clear()
 	end;
+	lostGame=function(self)
+		transition:start(mode_game,{lvl="lvl1"})
+	end
 }
 mode_cutscene=
 {
@@ -234,6 +312,42 @@ allobjects={
 	end
 }
 allobjects_infront={
+	clear=function(self)
+		local size=#self
+		for i=1,size do
+			self[size-i+1]=nil
+		end
+	end;
+	todelete={};
+	delete=function(self,obj)
+		self.todelete[#self.todelete+1]=obj
+	end;
+	startupdate=function(self,dt)
+		for i=1,#self do
+			local p=self[#self-i+1]
+			p:startupdate(dt);
+		end
+	end;
+	endupdate=function(self,dt)
+		for i=1,#self do
+			local p=self[#self-i+1]
+			p:endupdate(dt);
+		end
+		
+		--delete todelete
+		for i,obj in pairs(self.todelete) do
+			for i,p in pairs(self) do
+				if p==obj then
+					self[i]=self[#self]
+					self[#self]=nil
+					break
+				end
+			end
+		end
+		self.todelete={}
+	end
+}
+allobjects_inback={
 	clear=function(self)
 		local size=#self
 		for i=1,size do
@@ -356,6 +470,32 @@ object_infront=setmetatable(
 		return ret;
 	end
 })
+object_inback=setmetatable(
+{
+	startupdate=function(self,dt)
+	end;
+	endupdate=function(self,dt)
+		DRAWIMG(math.floor(self.x+self.dox+0.5)-camera.x,math.floor(self.y+self.doy+0.5)-camera.y,self.img,self.flipx,self.flipy)
+	end;
+},
+{
+	__index=object;
+	__call=function(self,props)
+		local ret=setmetatable({},{__index=self;});
+		ret.type="object_inback";
+		ret.name=props.name or "none";
+		ret.x=props.x or 0;
+		ret.y=props.y or 0;
+		ret.dox=props.dox or 0;
+		ret.doy=props.doy or 0;
+		ret.w=props.w or 10;
+		ret.h=props.h or 10;
+		
+		ret.img=props.img or "default7x7.png";
+		allobjects_inback[#allobjects_inback+1]=ret;
+		return ret;
+	end
+})
 object=setmetatable(
 {
 	startupdate=function(self,dt)
@@ -429,7 +569,7 @@ object_colliding=setmetatable(
 				self.y=other.y+other.h+a
 				self.vy=0
 			else 
-				self.y=self.y+1
+				--self.y=self.y+1
 				print("dupa")
 			end
 		end
@@ -445,23 +585,61 @@ object_colliding=setmetatable(
 	end
 })
 
-object_platform=setmetatable(
+object_platform_hor=setmetatable(
 {
-	self.movementSpeed
 	startupdate=function(self)
 		object_colliding.startupdate(self)
-		
-	end
+		if self.movementSpeed<0 then
+			if self.x <= self.movementMin then
+				self.movementSpeed=-self.movementSpeed
+			end
+		else
+			if self.x>= self.movementMax then
+				self.movementSpeed=-self.movementSpeed
+			end
+		end
+		self.x=self.x+self.movementSpeed
+	end;
 },
 {
 	__index=object_colliding;
 	__call=function(self,props)
 		local ret = getmetatable(object_colliding).__call(self, props);
-		ret.direction=props.direction or "horizontal"
-		ret.movementMin=props.movementMin or (ret.direction=="horizontal" and ret.x) or ret.y;
-		ret.movementMax=props.movementMax or (ret.direction=="horizontal" and ret.x) or ret.y;
-		ret.movementSpeed=
-		ret.type="object_platform";
+		ret.movementMin=props.movementMin or ret.x;
+		ret.movementMax=props.movementMax or ret.x;
+		ret.movementSpeed=props.movementSpeed or 1;
+		ret.type="object_colliding";
+		return ret;
+	end
+})
+
+object_platform_ver=setmetatable(
+{
+	startupdate=function(self)
+		object_colliding.startupdate(self)
+		if self.movementSpeed<0 then
+			if self.y <= self.movementMin then
+				self.movementSpeed=-self.movementSpeed
+			end
+		else
+			if self.y>= self.movementMax then
+				self.movementSpeed=-self.movementSpeed
+			end
+		end
+		self.y=self.y+self.movementSpeed
+	end;
+	onoverlap=function(self,other)
+		other.y=other.y+self.movementSpeed
+	end;
+},
+{
+	__index=object_colliding;
+	__call=function(self,props)
+		local ret = getmetatable(object_colliding).__call(self, props);
+		ret.movementMin=props.movementMin or ret.y;
+		ret.movementMax=props.movementMax or ret.y;
+		ret.movementSpeed=props.movementSpeed or 1;
+		ret.type="object_colliding";
 		return ret;
 	end
 })
@@ -573,6 +751,9 @@ object_player=setmetatable(
 		else
 			self.img="postaci_reaper_reaper_jump_mid.png";
 		end
+		if self.y>#mode_game.currLvlData*7 then
+			mode_game:lostGame()
+		end
 	end;
 	endupdate=function(self)
 		object_colliding.endupdate(self)
@@ -605,7 +786,33 @@ object_player=setmetatable(
 		return ret;
 	end
 })
-
+object_fly=setmetatable(
+{
+	t=0;
+	isDead=false;
+	die=function(self)
+		self.isDead=true
+	end;
+	startupdate=function(self)
+		if self.isDead then
+		else
+			object_overlapping.startupdate(self)
+			self.t=self.t+1
+			self.x,self.y=20*math.cos(self.t/64.0)+self.startx,10*math.sin(self.t/32.0)+self.starty
+		end
+	end
+},
+{
+	__index=object_overlapping;
+	__call=function(self,props)
+		local ret = getmetatable(object_overlapping).__call(self, props);
+		ret.type="object_zlol";
+		ret.startx=props.x
+		ret.starty=props.y
+		
+		return ret;
+	end
+})
 object_zlol=setmetatable(
 {
 	isThinking=50;
