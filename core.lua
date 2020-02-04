@@ -206,7 +206,7 @@ mode_game=
 				elseif v==52 then
 					object_infront({x=px,y=py,name="drzwi przod",img="test.png"})
 				elseif v==91 then
-					object_fly({x=px,y=py,w=4,h=4,name="muszka",img="sphere3.png"})
+					object_bat({x=px,y=py,w=8,h=5,name="bat",dox=-3,dox=-1})
 				elseif v==92 then
 					local zlolx,zloly=px,py-3
 					object_zlol({x=zlolx,y=zloly,w=4,h=10,dox=-2,doy=-3,img="postaci_zlol_idle_1.png"})
@@ -266,7 +266,7 @@ camera=
 			if self.y+SCREEN_Y_RES < lvlHeight then
 				self.y=self.y+1
 			end
-		elseif plmy-(self.y+SCREEN_Y_RES/2)<-20 then
+		elseif plmy-(self.y+SCREEN_Y_RES/2)<-10 then
 			if self.y>0 then
 				self.y=self.y-1
 			end
@@ -789,27 +789,85 @@ object_player=setmetatable(
 object_fly=setmetatable(
 {
 	t=0;
+	movementSpeed=1;
 	isDead=false;
 	die=function(self)
 		self.isDead=true
 	end;
 	startupdate=function(self)
 		if self.isDead then
+			self.anim=self.DeathAnim
 		else
 			object_overlapping.startupdate(self)
 			self.t=self.t+1
-			self.x,self.y=20*math.cos(self.t/64.0)+self.startx,10*math.sin(self.t/32.0)+self.starty
+			self:tryaddoffset(20*math.cos(self.t/64.0)+self.startx-self.x,10*math.sin(self.t/32.0)+self.starty-self.y)
+			--self.x,self.y=,
+			self.anim=self.IdleAnim
+		end
+		local fin=false
+		
+		self.img,fin=self.anim()
+		
+		if fin and self.isDead then
+			allobjects:delete(self)
+			alloverlapping:delete(self)
 		end
 	end
 },
 {
-	__index=object_overlapping;
+	__index=object_colliding;
 	__call=function(self,props)
-		local ret = getmetatable(object_overlapping).__call(self, props);
+		local ret = getmetatable(object_colliding).__call(self, props);
 		ret.type="object_zlol";
+		ret.isMovable=true
 		ret.startx=props.x
 		ret.starty=props.y
-		
+		ret.movementSpeed=(ret.x*0.123+ret.y*1.783)%1.3
+		ret.t=(ret.x+ret.y)*(-13.127)
+		self.anim=nil;
+		return ret;
+	end
+})
+object_bat=setmetatable(
+{
+},
+{
+	__index=object_fly;
+	__call=function(self,props)
+		local ret = getmetatable(object_fly).__call(self, props);
+		self.IdleAnim=AnimMaker({
+			"postaci_nietoperz_idle_f0.png",
+			"postaci_nietoperz_idle_f1.png",
+			"postaci_nietoperz_idle_f2.png",
+			"postaci_nietoperz_idle_f3.png",
+			"postaci_nietoperz_idle_f4.png",
+			"postaci_nietoperz_idle_f5.png",
+			"postaci_nietoperz_idle_f6.png",
+			"postaci_nietoperz_idle_f7.png"
+		},13);
+		self.DeathAnim=AnimMaker({
+			"postaci_nietoperz_death_f.0000.png",
+			"postaci_nietoperz_death_f.0001.png",
+			"postaci_nietoperz_death_f.0002.png",
+			"postaci_nietoperz_death_f.0003.png",
+			"postaci_nietoperz_death_f.0004.png",
+			"postaci_nietoperz_death_f.0005.png",
+			"postaci_nietoperz_death_f.0006.png",
+			"postaci_nietoperz_death_f.0007.png",
+			"postaci_nietoperz_death_f.0008.png",
+			"postaci_nietoperz_death_f.0009.png",
+			"postaci_nietoperz_death_f.0010.png",
+			"postaci_nietoperz_death_f.0011.png",
+			"postaci_nietoperz_death_f.0012.png",
+			"postaci_nietoperz_death_f.0013.png",
+			"postaci_nietoperz_death_f.0014.png",
+			"postaci_nietoperz_death_f.0015.png",
+			"postaci_nietoperz_death_f.0016.png",
+			"postaci_nietoperz_death_f.0017.png",
+			"postaci_nietoperz_death_f.0018.png",
+			"postaci_nietoperz_death_f.0019.png",
+			"postaci_nietoperz_death_f.0020.png"
+		},3);
 		return ret;
 	end
 })
