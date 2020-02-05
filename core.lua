@@ -4,6 +4,7 @@ function _LOAD()
 	CLEAR(true)
 	currmode=mode_menu
 	mode_menu:init()
+	PLAYMUSIC("chopin")
 end
 function _LOOP(dt)
 	if ISKEYPRESSED("1") then
@@ -14,6 +15,9 @@ function _LOOP(dt)
 	end
 	if ISKEYPRESSED("3") then
 		transition:start(mode_game,{lvl="lvl3"})
+	end
+	if ISKEYPRESSED("4") then
+		transition:start(mode_EndGameCredits)
 	end
 	currmode:update(dt)
 	if transition.enabled then
@@ -82,15 +86,31 @@ mode_menu=
 		{imagePaths={
 			"cut_scenes_cut_work_korpo.png"
 			},
-			timeBetweenFrames=3,direction="right"};
+			timeBetweenFrames=1.5,direction="left"};
 		{imagePaths={
 			"cut_scenes_cut_collect_soul.png"
 			},
-			timeBetweenFrames=3,direction="left"};
+			timeBetweenFrames=2,direction="down"};
+		{imagePaths={
+			"cut_scenes_cut_dream.png"
+			},
+			timeBetweenFrames=1.8,direction="top"};
+		{imagePaths={
+			"cut_scenes_cut_work_korpo.png"
+			},
+			timeBetweenFrames=1,direction="left"};
+		{imagePaths={
+			"cut_scenes_cut_work_quit.png"
+			},
+			timeBetweenFrames=2,direction="left"};
+		{imagePaths={
+			"cut_scenes_cut_lapie_kose.png"
+			},
+			timeBetweenFrames=1.5,direction="left"};
 		{imagePaths={
 			"cut_scenes_cut_catch_him.png"
 			}
-			,timeBetweenFrames=3,direction="left"};
+			,timeBetweenFrames=2.5,direction="left"};
 		
 	};
 	init=function(self)
@@ -119,13 +139,12 @@ mode_menu=
 			local dir=nil
 			local currLastFrame=nil
 			if self.index==0 then
-				dir="down"
+				dir="left"
 				currLastFrame="cut_scenes_cut_reaper.png"
 			else
 				dir=self.cutsceneList[self.index].direction
 				currLastFrame=self.cutsceneList[self.index].imagePaths[#self.cutsceneList[self.index].imagePaths]
 			end
-			print("currLastFrame: "..currLastFrame)
 			local nextFirstFrame=self.cutsceneList[self.index+1].imagePaths[1]
 			
 			local progx=math.floor((self.whoops/self.whoopsMax)*SCREEN_X_RES);
@@ -156,7 +175,11 @@ mode_menu=
 				if ISKEYPRESSED("z") then
 					self.whoops=0
 				end
-				DRAWIMG(0,0,"cut_scenes_cut_reaper.png")
+				if self.menuTime%1>0.7 then
+				DRAWIMG(0,0,"cut_scenes_opening_screen2.png")
+				else
+				DRAWIMG(0,0,"cut_scenes_opening_screen.png")
+				end
 			else
 				--cutscenki
 				local img,fin=self.cutsceneList[self.index].anim(dt)
@@ -203,6 +226,7 @@ mode_game=
 {
 	cullLvlData=nil;
 	init=function(self,data)
+		PLAYMUSIC("minorMario")
 		--preapare everything
 		--spawn everything
 		self.currLvlData=LEVELS[data.lvl];
@@ -237,6 +261,14 @@ mode_game=
 					object_door({x=px,y=py,w=7,h=7,name="door",img="sphere1.png",nextlevel="lvl3"})
 				elseif v==4 then
 					object_door({x=px,y=py,w=7,h=7,name="door",img="sphere1.png",nextlevel="won"})
+				elseif v==5 then
+					object({x=px,y=py,name="arrow",img="obiekty_arrows_hor.png"})
+				elseif v==6 then
+					object({x=px,y=py,name="arrow",img="obiekty_arrows_hor.png",flipx=true})
+				elseif v==7 then
+					object({x=px,y=py,name="arrow",img="obiekty_arrows_ver.png"})
+				elseif v==8 then
+					object({x=px,y=py,name="arrow",img="obiekty_arrows_ver2.png"})
 				elseif v==10 then
 					local liczbakolejnychplat=0
 					local xtocheck=x+1
@@ -244,7 +276,7 @@ mode_game=
 						liczbakolejnychplat=liczbakolejnychplat+1
 						xtocheck=xtocheck+1
 					end
-					object_platform_hor({x=px,y=py,w=15,h=7,name="platform",img="obiekty_tiles_t2_2x1.png",movementSpeed=0.3,movementMin=px,movementMax=px+liczbakolejnychplat*7})
+					object_platform_hor({x=px,y=py,w=15,h=7,name="platform",img="obiekty_tiles_biom1_t1_2x1.png",movementSpeed=0.3,movementMin=px,movementMax=px+liczbakolejnychplat*7})
 				elseif v==11 then
 					--RESERVED FOR PLATFORM_HOR HELPER
 				elseif v==12 then
@@ -257,6 +289,20 @@ mode_game=
 					object_platform_ver({x=px,y=py,w=15,h=7,name="platform",img="obiekty_tiles_t2_2x1.png",movementSpeed=0.3,movementMin=py,movementMax=py+liczbakolejnychplat*7})
 				elseif v==13 then
 					--RESERVED FOR PLATFORM_HOR HELPER
+				elseif v==14 then
+					
+					object_colliding({x=px,y=py,w=7,h=7,name="obj2",img="obiekty_tiles_biom1_t1_1x1.png"})			--14
+				elseif v==15 then
+					object_colliding({x=px,y=py,w=7,h=14,name="obj2",img="obiekty_tiles_biom1_1x2_chair.png"})		--15
+				elseif v==16 then
+					object_colliding({x=px,y=py,w=14,h=7,name="obj2",img="obiekty_tiles_biom1_t1_2x1.png"})			--16
+				elseif v==17 then
+					object_colliding({x=px,y=py,w=14,h=7,name="obj2",img="obiekty_tiles_biom1_t1_2x1_komp"})		--17
+				elseif v==18 then
+					object_colliding({x=px,y=py,w=14,h=14,name="obj2",img="obiekty_tiles_biom1_t1_2x2.png"})		--18
+				elseif v==19 then
+					object_colliding({x=px,y=py,w=21,h=7,name="obj2",img="obiekty_tiles_biom1_t1_3x1_desk.png"})	--19
+					
 				elseif v==20 then
 					object_colliding({x=px,y=py,w=14,h=7,name="obj2",img="obiekty_tiles_t1_2x1.png"})
 				elseif v==21 then
@@ -322,13 +368,16 @@ mode_game=
 				elseif v==46 then
 					object_colliding({x=px,y=py,w=28,h=28,name="obj2",img="obiekty_tiles_biom3_t3_4x4.png",flipx=true,dox=-1})
 				elseif v==51 then
-					object_colliding({x=px,y=py,w=21,h=20,name="drzwi tyl",img="test2.png"})
+					object_colliding({x=px,y=py,w=21,h=7,name="drzwi tyl",img="obiekty_exit_e1.png",doy=-1})
+					object_infront({x=px,y=py,name="drzwi przod",img="obiekty_exit_e1_2.png",doy=-1})
 				elseif v==52 then
-					object_infront({x=px,y=py,name="drzwi przod",img="test.png"})
 				elseif v==61 then
 				elseif v==62 then
 					object_inback({x=px,y=py,name="tlo",img="tla_b3.png"})
 				elseif v==63 then
+					object_inback({x=px,y=py,name="tlo",img="tla_b1.png"})
+				elseif v==64 then
+					object_inback({x=px,y=py,name="tlo",img="tla_b2.png"})
 				elseif v==70 then
 					object_colliding({x=px,y=py,w=7,h=7,name="tile",img="obiekty_tiles_biom2_t2_1x1.png",dox=-1})
 				elseif v==71 then
@@ -361,7 +410,7 @@ mode_game=
 					local liczbakolejnychplat=0
 					local ytocheck=y+1
 					while LEVELS[data.lvl][ytocheck][x]==85 do
-						liczbakolejnychplat=liczbakolejnychplat+1
+						liczbakolejnychplat=liczbakolejnychplat+1 
 						ytocheck=ytocheck+1
 					end
 					object_platform_ver({x=px,y=py,w=21,h=7,name="platform",img="obiekty_tiles_biom2_t2_3x1.png",movementSpeed=0.2,movementMin=py,movementMax=py+liczbakolejnychplat*7})
@@ -378,11 +427,28 @@ mode_game=
 					object_platform_hor({x=px,y=py,w=21,h=7,name="platform",img="obiekty_tiles_biom2_t2_3x1.png",movementSpeed=0.3,movementMin=px,movementMax=px+liczbakolejnychplat*7})
 				elseif v==87 then
 					--RESERVED FOR PLATFORM_HOR HELPER
+				elseif v==88 then
+					object_colliding({x=px,y=py,w=21,h=7,name="obj2",img="obiekty_tiles_biom1_t1_3x2_desk_chair.png",doy=-7})			--88
+				elseif v==89 then
+					object_colliding({x=px,y=py,w=35,h=7,name="obj2",img="obiekty_tiles_biom1_t1_5x1.png"})
+				elseif v==90 then
+					object_colliding({x=px,y=py,w=154,h=7,name="obj2",img="obiekty_tiles_biom1_t1_22x1.png"})
 				elseif v==91 then
-					object_bat({x=px,y=py,w=8,h=5,name="bat",dox=-3,dox=-1})
+					object_colliding({x=px,y=py,w=14,h=14,name="obj2",img="obiekty_tiles_biom1_t1a_2x2.png"})
 				elseif v==92 then
+					object_colliding({x=px,y=py,w=14,h=14,name="obj2",img="obiekty_tiles_biom1_t1b_2x2_.png"})
+				elseif v==93 then
+					object_colliding({x=px,y=py,w=14,h=14,name="obj2",img="obiekty_tiles_biom1_t1c_2x2.png"})
+				elseif v==94 then
+					object_colliding({x=px,y=py,w=14,h=14,name="obj2",img="obiekty_tiles_biom1_t1w_2x2.png"})							--94
+				elseif v==97 then
+					object_bat({x=px,y=py,w=8,h=5,name="bat",dox=-3,dox=-1})
+				elseif v==98 then
 					local zlolx,zloly=px,py-3
 					object_zlol({x=zlolx,y=zloly,w=4,h=10,dox=-2,doy=-3,img="postaci_zlol_idle_1.png"})
+				elseif v==99 then
+					local zlolx,zloly=px,py
+					object_faflun({x=zlolx,y=zloly,w=6,h=14,dox=-2,doy=-3,img="postaci_faflun_walk_4.png",dox=-2,doy=-1})
 				end
 			end
 		end
@@ -411,23 +477,25 @@ mode_game=
 		alloverlapping:clear()
 	end;
 	lostGame=function(self)
-		transition:start(mode_game,{lvl="lvl1"})
+		transition:start(mode_Lost)
 	end
 }
 mode_EndGameCredits=
 {
 	mytime=0;
 	init=function(self)
+		PLAYMUSIC("majorMario")
 		self.anim=AnimMaker(
-			{--paths to frames
-			--THOSE FRAMES SHOULD HAVE RESOLUTION:		XRES,YRES*2
-				
+			{
+				"cut_scenes_you_won1.png",
+				"cut_scenes_you_won2.png"
 			},5)
 	end;
 	update=function(self,dt)
 		self.mytime=self.mytime+dt
-		local imageHeight=3*SCREEN_Y_RES --TRZEBA BEDZIE ZMIENIC
-		DRAWIMG(0,math.min(0,math.max(10-self.mytime,-SCREEN_Y_RES)),self.anim())
+		local imageHeight=2*SCREEN_Y_RES --TRZEBA BEDZIE ZMIENIC
+		local img=self.anim()
+		DRAWIMG(0,math.min(0,math.max(math.floor(10-self.mytime*5),-SCREEN_Y_RES)),img)
 	end;
 	finish=function(self)
 	end;
@@ -435,8 +503,13 @@ mode_EndGameCredits=
 mode_Lost=
 {
 	init=function(self)
+		PLAYMUSIC("chopin")
 	end;
 	update=function(self,dt)
+		if ISKEYPRESSED("z") then
+			transition:start(mode_game,{lvl="lvl1"})
+		end
+		DRAWIMG(0,0,"cut_scenes_you_lost.png")
 	end;
 	finish=function(self)
 	end;
@@ -723,6 +796,7 @@ object=setmetatable(
 		ret.dox=props.dox or 0;
 		ret.doy=props.doy or 0;
 		ret.flipx=props.flipx;
+		ret.flipy=props.flipy;
 		ret.w=props.w or 10;
 		ret.h=props.h or 10;
 		
@@ -779,7 +853,7 @@ object_colliding=setmetatable(
 				self.vy=0
 			else 
 				--self.y=self.y+1
-				print("dupa")
+				--print("dupa")
 			end
 		end
 	end;
@@ -1018,7 +1092,7 @@ object_fly=setmetatable(
 	end;
 	onoverlap=function(self,other)
 		object_colliding.onoverlap(self,other)
-		if other.type=="object_player" then
+		if other.type=="object_player" and (not self.isDead) then
 			transition:start(mode_Lost)
 		end
 	end
@@ -1085,6 +1159,7 @@ object_zlol=setmetatable(
 	isThinking=50;
 	maxThinking=100;
 	isDead=false;
+	movementSpeed=0.5;
 	die=function(self)
 		self.isDead=true;
 		self.anim=self.DeathAnim
@@ -1107,25 +1182,20 @@ object_zlol=setmetatable(
 				local czyPrzedNimJestSciana =false
 				if self.flipx then
 					czyPrzedNimJestPodloga=alloverlapping:isCollisionAt(self.x-2,self.y+self.h+1,false)
-					czyPrzedNimJestSciana=alloverlapping:isCollisionAt(self.x-2,self.y+3,false) or alloverlapping:isCollisionAt(self.x-2,self.y+6,false)
+					czyPrzedNimJestSciana=alloverlapping:isCollisionAt(self.x-2,self.y+3,false) or alloverlapping:isCollisionAt(self.x-2,self.y+8,false)
 				else
 					czyPrzedNimJestPodloga=alloverlapping:isCollisionAt(self.x+self.w+1,self.y+self.h+1,false)
-					czyPrzedNimJestSciana=alloverlapping:isCollisionAt(self.x+self.w+1,self.y+3,false) or alloverlapping:isCollisionAt(self.x+self.w+1,self.y+6,false)
+					czyPrzedNimJestSciana=alloverlapping:isCollisionAt(self.x+self.w+1,self.y+3,false) or alloverlapping:isCollisionAt(self.x+self.w+1,self.y+8,false)
 				end
 				
 				if (not czyPrzedNimJestPodloga) or czyPrzedNimJestSciana then
 					self.isThinking=self.maxThinking
 				else
-					self:tryaddoffset((self.flipx and -0.5) or 0.5,0);
+					self:tryaddoffset((self.flipx and -self.movementSpeed) or self.movementSpeed,0);
 					self.anim=self.RunAnim
 				end
 				
 			end
-			--if self.flipx then
-			--	self:tryaddoffset(-2,0)
-			--else
-			--	self:tryaddoffset(2,0)
-			--end
 		end
 		local fin=false
 		self.img,fin=self.anim()
@@ -1139,7 +1209,7 @@ object_zlol=setmetatable(
 	end;
 	onoverlap=function(self,other)
 		object_colliding.onoverlap(self,other)
-		if other.type=="object_player" then
+		if other.type=="object_player" and (not self.isDead) then
 			transition:start(mode_Lost)
 		end
 	end
@@ -1216,7 +1286,57 @@ object_zlol=setmetatable(
 })
 
 
-
+object_faflun=setmetatable(
+{
+},
+{
+	__index=object_zlol;
+	__call=function(self,props)
+		local ret = getmetatable(object_zlol).__call(self, props);
+		ret.type="object_zlol";
+		ret.maxThinking=0;
+		ret.movementSpeed=0.3;
+		ret.RunAnim=AnimMaker({
+			"postaci_faflun_walk_1.png",
+			"postaci_faflun_walk_2.png",
+			"postaci_faflun_walk_3.png",
+			"postaci_faflun_walk_4.png",
+			"postaci_faflun_walk_5.png",
+			"postaci_faflun_walk_6.png",
+			"postaci_faflun_walk_7.png",
+			"postaci_faflun_walk_8.png"
+		},5)
+		ret.DeathAnim=AnimMaker({
+			"postaci_faflun_death_f.0000.png",
+			"postaci_faflun_death_f.0001.png",
+			"postaci_faflun_death_f.0002.png",
+			"postaci_faflun_death_f.0003.png",
+			"postaci_faflun_death_f.0004.png",
+			"postaci_faflun_death_f.0005.png",
+			"postaci_faflun_death_f.0006.png",
+			"postaci_faflun_death_f.0007.png",
+			"postaci_faflun_death_f.0008.png",
+			"postaci_faflun_death_f.0009.png",
+			"postaci_faflun_death_f.0010.png",
+			"postaci_faflun_death_f.0011.png",
+			"postaci_faflun_death_f.0012.png",
+			"postaci_faflun_death_f.0013.png",
+			"postaci_faflun_death_f.0014.png",
+			"postaci_faflun_death_f.0015.png",
+			"postaci_faflun_death_f.0016.png",
+			"postaci_faflun_death_f.0017.png",
+			"postaci_faflun_death_f.0018.png",
+			"postaci_faflun_death_f.0019.png",
+			"postaci_faflun_death_f.0020.png",
+			"postaci_faflun_death_f.0021.png"
+		},6,true);
+		ret.IdleAnim=AnimMaker({
+			"postaci_faflun_walk_3.png",
+		},2);
+		
+		return ret;
+	end
+})
 
 
 clamp=function(a,mi,ma)
@@ -1276,7 +1396,6 @@ object_door=setmetatable(
 {
 	onoverlap=function(self,other)
 		object_colliding.onoverlap(self,other)
-		print("kolizja drzwi")
 		if other.type=="object_player" then
 			transition:start(mode_game,{lvl=self.nextlevel})
 		end

@@ -1,5 +1,7 @@
 require "core"
 require "images"
+require "sounds"
+
 isEditor=false
 
 SCREEN_CELL=5
@@ -20,20 +22,26 @@ tex_youLost={
 function updateWindowSize()
 	SCREEN_WIDTH=SCREEN_X_RES*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_CELL_MARGIN
 	SCREEN_HEIGHT=SCREEN_Y_RES*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_CELL_MARGIN
-	love.window.setMode(SCREEN_WIDTH,SCREEN_HEIGHT)
+	love.window.setMode(SCREEN_WIDTH,SCREEN_HEIGHT,{borderless=true})
 end
 function love.load(arg)
 	if arg[1]=="editor" then
 		isEditor=true
 	end
+	love.window.setTitle("Run Reaper, run!")
 	updateWindowSize()
 	loadscreen()
+	
+	sound=love.audio.newSource("c.mp3", "static")
+	sound:setLooping(true)
 	
 	if not isEditor then
 		_LOAD()
 	else
 		--kod load editora
 	end
+	
+	
 end
 
 
@@ -48,7 +56,6 @@ function loadscreen()
 end
 keypressed={}
 function love.keypressed(key)
-	print(key)
 	if key=="-" then
 		SCREEN_CELL=math.max(1,SCREEN_CELL-1)
 		updateWindowSize()
@@ -133,6 +140,18 @@ end
 
 --[[]]------------------------------------------------
 function love.update(dt)
+	--music
+	ttn=ttn-dt
+	if ttn<=0 then
+		if currentMusic then
+			if musicSoundIndex>=#currentMusic then
+				sound:stop()
+			else
+				playBeep()
+			end
+		end
+	end
+	--[[music~~]]
 	if not isEditor then
 		_LOOP(dt)
 	else
@@ -218,7 +237,6 @@ function love.mousemoved( x, y, dx, dy, istouch )
 			screenData=deepcopy(prevStates[#prevStates])
 			for j=miny,maxy do
 				local lminx,lmaxx=math.floor(((j-0.5)*a+b)+0.5),math.floor(((j+0.5)*a+b)+0.5)+1
-				--print("lminx,lmaxx|"..lminx..","..lmaxx)
 				for i=math.min(lminx,lmaxx),math.max(lminx,lmaxx) do
 					SETPIXEL(i,j,true)
 				end
@@ -270,6 +288,34 @@ function love.draw()
 	end
 end
 
+
+--[[++music++]]
+
+musicSoundIndex=0
+timemultiplier=1.5
+currentMusic=nil
+
+
+PLAYMUSIC=function(path)
+	musicSoundIndex=0
+	currentMusic=SOUND[path]
+	playBeep()
+end
+
+PLAYSOUND=function(sound)
+	
+end
+
+playBeep=function()
+	sound:play()
+	musicSoundIndex=musicSoundIndex+1
+	local t,v,n=currentMusic[musicSoundIndex][1],currentMusic[musicSoundIndex][2],math.pow(2,(currentMusic[musicSoundIndex][3]+(currentMusic.pitch or 0))/12)
+	sound:setPitch(n)
+	sound:setVolume(v*(currentMusic.volume or 1))
+	ttn=ttn+t*timemultiplier*1/(currentMusic.speed or 1)
+end
+ttn=0;
+--[[~~music~~]]
 function deepcopy(orig, copies)
 	copies = copies or {}
 	local orig_type = type(orig)
