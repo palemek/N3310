@@ -5,3 +5,9 @@ C:\Users\JakubOrlinski\Downloads\N3310-master\CreateHTML\CreateHTML\obj\Release\
 C:\Users\JakubOrlinski\Downloads\N3310-master\CreateHTML\CreateHTML\obj\Release\CreateHTML.exe
 C:\Users\JakubOrlinski\Downloads\N3310-master\CreateHTML\CreateHTML\obj\Release\CreateHTML.pdb
 C:\Users\JakubOrlinski\Downloads\N3310-master\CreateHTML\CreateHTML\obj\Release\CreateHTML.csprojAssemblyReference.cache
+C:\Users\JakubOrlinski\Desktop\N3310-master\CreateHTML\CreateHTML\bin\Release\CreateHTML.exe.config
+C:\Users\JakubOrlinski\Desktop\N3310-master\CreateHTML\CreateHTML\bin\Release\CreateHTML.exe
+C:\Users\JakubOrlinski\Desktop\N3310-master\CreateHTML\CreateHTML\bin\Release\CreateHTML.pdb
+C:\Users\JakubOrlinski\Desktop\N3310-master\CreateHTML\CreateHTML\obj\Release\CreateHTML.csproj.CoreCompileInputs.cache
+C:\Users\JakubOrlinski\Desktop\N3310-master\CreateHTML\CreateHTML\obj\Release\CreateHTML.exe
+C:\Users\JakubOrlinski\Desktop\N3310-master\CreateHTML\CreateHTML\obj\Release\CreateHTML.pdb

@@ -1,22 +1,41 @@
 <!DOCTYPE html>
 <html>
 <body>
-
+<div id="Progress_Status">
+	<div id="myprogressBar"></div>
+</div>
 <canvas id="myCanvas" width="0" height="0" style="border:1px solid #d3d3d3;">
-Your browser does not support the HTML5 canvas tag.</canvas>
+Your browser does not support the HTML5 canvas tag.
+	
+</canvas>
 
 
 <script src="master/dist/lua.vm.js"></script>
 
+<style> 
+#Progress_Status{
+	width: 50%;
+	background-color: #ddd;
+} 
+
+#myprogressBar{
+	width: 2%;
+	height: 20px;
+	background-color: #4CAF50;
+}
+</style> 
 
 <script>
 
 var c = document.getElementById("myCanvas");
+var progressBar=document.getElementById("myprogressBar");
 var ctx = c.getContext("2d");
 var SCREEN_CELL=10
 var SCREEN_CELL_MARGIN=1
 var SCREEN_X_RES=84
 var SCREEN_Y_RES=48
+
+var SCREEN_MARGIN=10
 
 var SCREEN_WIDTH=SCREEN_X_RES*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_CELL_MARGIN
 var SCREEN_HEIGHT=SCREEN_Y_RES*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_CELL_MARGIN
@@ -24,24 +43,6 @@ var SCREEN_HEIGHT=SCREEN_Y_RES*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_CELL_MARG
 ctx.canvas.width=SCREEN_WIDTH
 ctx.canvas.height=SCREEN_HEIGHT
 
-//window.SCREEN=new Array(SCREEN_Y_RES);
-//
-//for (var i = 0; i < SCREEN_Y_RES; i++) {
-//	window.SCREEN[i]=new Array(SCREEN_X_RES);
-//	for (var j = 0; j < SCREEN_X_RES; j++) {
-//		var btn = document.createElement("DIV");
-//		window.SCREEN[i][j]=btn;
-//		btn.style.position = 'absolute';
-//		btn.style.left=(j)*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_CELL_MARGIN + 'px';
-//		btn.style.top=(i)*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_CELL_MARGIN + 'px';
-//		btn.style.width=SCREEN_CELL + 'px';
-//		btn.style.height=SCREEN_CELL + 'px';
-//		
-//		btn.style.backgroundColor="#43523d";//"rgb(" + 13 + ", " + 13 + ", " + 126 + ")";
-//		
-//		document.body.appendChild(btn)
-//	}
-//}
 
 </script>
 <script>
@@ -55,38 +56,118 @@ document.addEventListener('keyup', function(event) {
 function jsISKEYPRESSED(k)
 {
 	return window.keys[k.charCodeAt()];
-}
-var b="#c7f0d8"
-var w="#43523d"
+};
+var b="#c7f0d8";
+var w="#43523d";
 function jsSETPIXEL(x,y,v)
 {
 	var c=v?b:w;
 	
 	ctx.fillStyle=c;
-	ctx.fillRect(10+x*(SCREEN_CELL+SCREEN_CELL_MARGIN), 10+y*(SCREEN_CELL+SCREEN_CELL_MARGIN), SCREEN_CELL, SCREEN_CELL);
-	
-	//if (window.SCREEN[y-1][x-1].style.backgroundColor!=c)
-	//{
-	//	window.SCREEN[y-1][x-1].style.backgroundColor=c
-	//}
-	//if (v)
-	//{
-	//	if (window.SCREEN[y-1][x-1].style.backgroundColor!=b)
-	//	{
-	//		window.SCREEN[y-1][x-1].style.backgroundColor=b;//"rgb(" + 0 + ", " + 0 + ", " + 0 + ")";
-	//	}
-	//}else
-	//{
-	//	window.SCREEN[y-1][x-1].style.backgroundColor=w;//"rgb(" + 0 + ", " + 200 + ", " + 0 + ")";
-	//}
-	//
+	ctx.fillRect(SCREEN_MARGIN+x*(SCREEN_CELL+SCREEN_CELL_MARGIN), SCREEN_MARGIN+y*(SCREEN_CELL+SCREEN_CELL_MARGIN), SCREEN_CELL, SCREEN_CELL);
 };
 function jsCLEAR(v)
 {
 	var c=v?b:w;
 	ctx.fillStyle=c;
-	ctx.fillRect(10, 10, SCREEN_WIDTH, SCREEN_HEIGHT);
+	ctx.fillRect(SCREEN_MARGIN, SCREEN_MARGIN, SCREEN_WIDTH, SCREEN_HEIGHT);
 };
+var jsImages={};
+function jsCREATEIMAGE(width,height,path)
+{
+	jsImages[path]={};
+	jsImages[path].canvas=document.createElement('canvas');
+	jsImages[path].width=width;
+	jsImages[path].height=height;
+	jsImages[path].canvas.width=width*(SCREEN_CELL+SCREEN_CELL_MARGIN);
+	jsImages[path].canvas.height=height*(SCREEN_CELL+SCREEN_CELL_MARGIN);
+	jsImages[path].context=jsImages[path].canvas.getContext('2d');
+	jsImages[path].context.clearRect(0,0,jsImages[path].canvas.width,jsImages[path].canvas.height);
+};
+function jsIMGSETPIXEL(x,y,path,v)
+{
+	if (v==0)
+	{
+		return;
+	}else
+	{
+		var c=((v==2)?b:w);
+		
+		jsImages[path].context.fillStyle=c;
+		jsImages[path].context.fillRect(x*(SCREEN_CELL+SCREEN_CELL_MARGIN),y*(SCREEN_CELL+SCREEN_CELL_MARGIN),SCREEN_CELL,SCREEN_CELL);
+	}
+};
+function jsSAVEIMAGE(path)
+{
+	//i believe that is it
+};
+function jsDRAWIMG(imgPath,x,y,flipx,flipy)
+{
+	var sx=Math.max(1,-x)-1
+	var sw=Math.min(jsImages[imgPath].width,SCREEN_X_RES-x)-1-sx
+	
+	var sy=Math.max(1,-y)-1
+	var sh=Math.min(jsImages[imgPath].height,SCREEN_Y_RES-y)-1-sy
+	sx=sx*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_MARGIN
+	sw=sw*(SCREEN_CELL+SCREEN_CELL_MARGIN)
+	sy=sy*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_MARGIN
+	sh=sh*(SCREEN_CELL+SCREEN_CELL_MARGIN)
+	ctx.drawImage(jsImages[imgPath].canvas,sx,sy,sw,sh,x*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_MARGIN,y*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_MARGIN,sw,sh)
+}
+
+var allimagesnum=1;
+var currentimagesnum=0;
+var allPaths=new Array();
+var allImages=new Array();
+var allWidths=new Array();
+var allHeights=new Array();
+
+var bIsInitializationFinished=false;
+
+function jsSETIMAGESPATHSWIDTHSHEIGHTS(images,paths,widths,heights)
+{
+	for(var i=1;i < allimagesnum+1;i++)
+	{
+		allImages.push(images.get(i));
+		allPaths.push(paths.get(i));
+		allWidths.push(widths.get(i));
+		allHeights.push(heights.get(i));
+	}
+	document.createElement('canvas');
+}
+function jsFINALIZEIMAGEPREPARATION()
+{
+	progressBar.remove();
+	bIsInitializationFinished=true;
+}
+function jsPREPAREIMAGE(img,width,height,name)
+{
+	jsCREATEIMAGE(width,height,name);
+	for (var y=0;y<height;y++)
+	{
+		for (var x=0;x<width;x++)
+		{
+			jsIMGSETPIXEL(x,y,name,img.get(y+1).get(x+1))
+		}
+	}
+}
+function jsPREPAREIMAGEDELAYED()
+{
+	jsPREPAREIMAGE(allImages[currentimagesnum],allWidths[currentimagesnum],allHeights[currentimagesnum],allPaths[currentimagesnum]);
+	currentimagesnum+=1;
+	progressBar.style.width=(100.0*currentimagesnum)/allimagesnum + '%';
+	if (currentimagesnum<allimagesnum)
+	{
+		setTimeout(jsPREPAREIMAGEDELAYED,10);
+	}else
+	{
+		jsFINALIZEIMAGEPREPARATION();
+	}
+}
+function jsSETALLIMAGESNUM(num)
+{
+	allimagesnum=num;
+}
 </script>
 
 
@@ -106,6 +187,9 @@ function jsCLEAR(v)
 	function DRAW(x,y,data,flipx,flipy)
 		local height =#data
 		local width=#data[1]
+		--js translate:
+		--		context.drawImage(img,sx,sy,swidth,sheight,x,y,width,height);
+		--							sx=sx,sy=sy,swidth=ex-sx
 		local sx,ex,sy,ey=math.max(1,-x),math.min(width,SCREEN_X_RES-x),math.max(1,-y),math.min(height,SCREEN_Y_RES-y)
 		for i=sy,ey do
 			for j=sx,ex do
@@ -118,8 +202,9 @@ function jsCLEAR(v)
 		end
 	end
 	function DRAWIMG(x,y,imgPath,flipx,flipy)
-		local img=IMAGES[imgPath]
-		DRAW(x,y,img,flipx,flipy)
+		--local img=IMAGES[imgPath]
+		--DRAW(x,y,img,flipx,flipy)
+		js.global:jsDRAWIMG(imgPath,x,y,flipx,flipy)
 	end
 	function CLEAR(v)
 		js.global:jsCLEAR(v)
@@ -128,6 +213,27 @@ function jsCLEAR(v)
 		--		SETPIXEL(x,y,white or false)
 		--	end
 		--end
+	end
+	function PLAYMUSIC()
+		--TODO!!!!!
+	end
+	function _PREPAREIMAGES()
+		local images={}
+		local paths={}
+		local widths={}
+		local heights={}
+		local num=0
+		for path,img in pairs(IMAGES) do
+			images[#images+1]=img
+			paths[#paths+1]=path
+			widths[#widths+1]=#img[1]
+			heights[#heights+1]=#img
+			num=num+1
+		end
+		js.global:jsSETALLIMAGESNUM(num);
+		js.global:jsSETIMAGESPATHSWIDTHSHEIGHTS(images,paths,widths,heights)
+		js.global:jsPREPAREIMAGEDELAYED()
+		
 	end
 
 --[[GAME STARTS HERE]]
@@ -141,18 +247,46 @@ XXXXX_XXXXX
 function executeLua(code) { 
 	try { L.execute(code); } catch(e) { alert(e.toString()); } 
 }
+function DoPreparations()
+{
+	
+	console.log("started preparing images!")
+	executeLua('_PREPAREIMAGES()');
+	console.log("images prepared!");
+}
 
-setTimeout(updateFunc, 1);
-setTimeout(loadFunc, 5);
+
+setTimeout(initializeEngine, 5);
+function initializeEngine()
+{
+	DoPreparations();
+	setTimeout(trystartEngine,30);
+}
+function trystartEngine()
+{
+	if (bIsInitializationFinished)
+	{
+		loadFunc();
+	}else
+	{
+		setTimeout(trystartEngine,30);
+	}
+}
 function loadFunc()
 {
+	
+	console.log("going to call _LOAD()");
 	executeLua('_LOAD()');
+	console.log("_LOAD() executed")
+	
+	
+	setTimeout(updateFunc, 30);
 };
 
 function updateFunc()
 {
-	executeLua('_LOOP(0.010)');
-	setTimeout(updateFunc, 1);
+	executeLua('_LOOP(0.030)');
+	setTimeout(updateFunc, 30);
 };
 </script>
 

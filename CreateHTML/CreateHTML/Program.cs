@@ -17,13 +17,15 @@ namespace CreateHTML
             string secondHalf = main.Substring(location+11);
             string levels = File.ReadAllText(Directory.GetCurrentDirectory() + @"\levels.lua");
             string images = File.ReadAllText(Directory.GetCurrentDirectory() + @"\images.lua");
+            string sounds = File.ReadAllText(Directory.GetCurrentDirectory() + @"\sounds.lua");
             string core = File.ReadAllText(Directory.GetCurrentDirectory() + @"\core.lua");
 
             levels = RemoveFirstLinesWithRequire(levels);
             images = RemoveFirstLinesWithRequire(images);
             core = RemoveFirstLinesWithRequire(core);
+            sounds = RemoveFirstLinesWithRequire(sounds);
 
-            File.WriteAllText(Directory.GetCurrentDirectory() + @"\index.html",firstHalf + "\n\n" + levels + "\n\n" + images + "\n\n" + core + "\n\n" + secondHalf);
+            File.WriteAllText(Directory.GetCurrentDirectory() + @"\index.html",firstHalf + "\n\n" + levels + "\n\n" + images + "\n\n" + sounds + "\n\n" + core + "\n\n" + secondHalf);
         }
         static string RemoveFirstLinesWithRequire(string str)
         {

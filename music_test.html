@@ -1,55 +1,53 @@
 <head>
 </head>
 <body>
-<button type="button" onclick="playMusic()">Click Me!</button>
+<button type="button" onclick="PLAYMUSIC()">Click Me!</button>
 <script>
-//window.addEventListener("load", playSound);
 
-const context = new AudioContext();
 var musicData=new Array();
-musicData.push({'t':500, 'f':200, 'v':0.002});
-musicData.push({'t':300, 'f':300, 'v':0.008});
-musicData.push({'t':500, 'f':400, 'v':0.006});
-musicData.push({'t':800, 'f':350, 'v':0.004});
-const oscillator = context.createOscillator();
-oscillator.type = "square";
+musicData.push({'t':0.5, 'f':2, 'v':0.002});
+musicData.push({'t':0.3, 'f':3, 'v':0.008});
+musicData.push({'t':0.5, 'f':4, 'v':0.006});
+musicData.push({'t':0.8, 'f':3, 'v':0.004});
+var oscillator = 0;
 //oscillator.frequency.value=300;
+var AudioCxt=0;
+var gainNode=0;
 
-const gainNode = context.createGain();
-
-gainNode.gain.value = 0.01;
-
-oscillator.connect(gainNode);
-gainNode.connect(context.destination);
-
-function playSound()
+function updatePlaySound()
 {
 	if (!(musicIndex<musicData.length))
 	{
 		oscillator.stop()
 		return;
 	}
-	oscillator.frequency.setValueAtTime(musicData[musicIndex].f, context.currentTime);
+	oscillator.frequency.setValueAtTime(440*Math.pow(2,(musicData[musicIndex].f)/12), AudioCxt.currentTime);
 	//volume
-	gainNode.gain.setValueAtTime(musicData[musicIndex].v,context.currentTime);
+	gainNode.gain.setValueAtTime(musicData[musicIndex].v,AudioCxt.currentTime);
 	
-	console.log(musicData[musicIndex].t);
-	console.log(musicData[musicIndex].f);
-	console.log(musicData[musicIndex].v);
-	
-	window.setTimeout(playSound,musicData[musicIndex].t);
+	window.setTimeout(updatePlaySound,musicData[musicIndex].t*1000);
 	musicIndex++;
 }
 
 
 var musicIndex=0;
 
-function playMusic()
+function PLAYMUSIC()
 {
-	oscillator.start(0);
-	//context.resume();
+	AudioCxt = new AudioContext();
 	
-	playSound();
+	oscillator = AudioCxt.createOscillator();
+	oscillator.type = "square";
+	oscillator.start(0);
+	
+	gainNode = AudioCxt.createGain();
+
+	gainNode.gain.value = 0.01;
+
+	oscillator.connect(gainNode);
+	gainNode.connect(AudioCxt.destination);
+	
+	updatePlaySound();
 }
 </script>
 </body>
