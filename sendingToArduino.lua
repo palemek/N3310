@@ -1,16 +1,17 @@
-require "images"
-alldata={--[[IMAGES["cut_scenes_cut_collect_soul.png"],
-IMAGES["cut_scenes_cut_catch_him.png"],
-IMAGES["cut_scenes_cut_collect_soul.png"],
-IMAGES["cut_scenes_cut_dream.png"],
-IMAGES["cut_scenes_cut_lapie_kose.png"],
-IMAGES["cut_scenes_cut_reaper.png"],
-IMAGES["cut_scenes_cut_work_korpo.png"],
-IMAGES["cut_scenes_cut_work_quit.png"],
-IMAGES["cut_scenes_you_lost.png"],]]
-IMAGES["cut_scenes_opening_screen.png"],
-IMAGES["cut_scenes_opening_screen2.png"]
-}
+--require "images"
+--alldata={--[[IMAGES["cut_scenes_cut_collect_soul.png"],
+--IMAGES["cut_scenes_cut_catch_him.png"],
+--IMAGES["cut_scenes_cut_collect_soul.png"],
+--IMAGES["cut_scenes_cut_dream.png"],
+--IMAGES["cut_scenes_cut_lapie_kose.png"],
+--IMAGES["cut_scenes_cut_reaper.png"],
+--IMAGES["cut_scenes_cut_work_korpo.png"],
+--IMAGES["cut_scenes_cut_work_quit.png"],
+--IMAGES["cut_scenes_you_lost.png"],]]
+--IMAGES["cut_scenes_opening_screen.png"],
+--IMAGES["cut_scenes_opening_screen2.png"]
+--}
+require "recording"
 for i,p in pairs(alldata) do
   local data=p
   local str=""

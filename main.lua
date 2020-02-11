@@ -271,7 +271,10 @@ function love.draw()
 	local currcolor=true
 	setC(false)
 	
+	--[[]]
+	local str="{"
 	for y,p in pairs(screenData) do--love.graphics.rectangle("fill",100,100,84,48);
+		str=str.."{"
 		for x,p in pairs(screenData[y]) do
 			if SWAPCOLORS then
 				setC(not screenData[y][x])
@@ -284,7 +287,15 @@ function love.draw()
 			--end
 			--print(x.." "..y)
 			love.graphics.rectangle("fill",(x-1)*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_CELL_MARGIN,(y-1)*(SCREEN_CELL+SCREEN_CELL_MARGIN)+SCREEN_CELL_MARGIN,SCREEN_CELL,SCREEN_CELL);
+			str=str..(screenData[y][x] and "2," or "1,")
 		end
+		str=str:sub(1,#str-1).."},"
+	end
+	
+	str=str:sub(1,#str-1).."},\n"
+	if ISKEYPRESSED("p") then 
+		file=io.open("N3310/recording.lua", "a")
+		file:write(str)
 	end
 end
 
